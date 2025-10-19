@@ -11,8 +11,6 @@ interface ITimelockVault {
         address[] calldata tos,
         uint256[] calldata amounts
     ) external;
-
-    function markDisbursed(uint256 raffleId, address token) external;
 }
 
 /**
@@ -27,6 +25,7 @@ contract RaffylFactory {
     // Global registries
     address[] private _communities;
     mapping(address => bool) public isCommunity;
+    mapping(address => string) public communityNames;
 
     struct RaffleRef {
         address community;
@@ -37,7 +36,7 @@ contract RaffylFactory {
     // Uses top-level ITimelockVault interface declared above
 
     // Events
-    event CommunityCreated(address indexed admin, address indexed community);
+    event CommunityCreated(address indexed admin, address indexed community, string name);
     event RaffleRegistered(address indexed community, uint256 indexed id);
     event BatchPayoutProcessed(
         address indexed community,
@@ -47,12 +46,13 @@ contract RaffylFactory {
 
     // Community lifecycle
     // Add name back to creating communities
-    function createCommunity() external returns (address community) {
+    function createCommunity(string calldata name) external returns (address community) {
         // Community constructor expects (admin, factory)
         community = address(new Community(msg.sender, address(this)));
         _communities.push(community);
         isCommunity[community] = true;
-        emit CommunityCreated(msg.sender, community);
+        communityNames[community] = name;
+        emit CommunityCreated(msg.sender, community, name);
     }
 
     // Views
@@ -103,9 +103,7 @@ contract RaffylFactory {
         // Execute batch payout (TimelockVault enforces timelock and totals)
         vault.batchPay(id, token, winners, amounts);
 
-        // Finalize disbursement (requires full paid == locked)
-        vault.markDisbursed(id, token);
-
+        // The vault marks itself as disbursed internally. Now, mark the raffle as paid out.
         ICommunity(msg.sender).markRafflePaidOut(id);
 
         emit BatchPayoutProcessed(msg.sender, id, _sum(amounts));

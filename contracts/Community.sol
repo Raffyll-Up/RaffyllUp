@@ -18,6 +18,7 @@ contract Community {
     enum RaffleStatus { Upcoming, Active, Drawn, PaidOut, Cancelled }
 
     struct Raffle {
+        string name;
         address token; // address(0) for ETH
         uint64 endTime;
         uint32 winnersCount;
@@ -57,7 +58,7 @@ contract Community {
     event FundedETH(address indexed from, uint256 amount);
     event FundedToken(address indexed from, address indexed token, uint256 amount);
 
-    event RaffleCreated(uint256 indexed id, address indexed token, uint64 endTime, uint32 winnersCount, uint256 totalPrize);
+    event RaffleCreated(uint256 indexed id, string name, address indexed token, uint64 endTime, uint32 winnersCount, uint256 totalPrize, bool requireCommunityMembership);
     event RaffleLocked(uint256 indexed id, address indexed token, uint256 amount, uint64 endTime);
     event RegisteredForRaffle(uint256 indexed id, address indexed user);
     event WinnersDrawn(uint256 indexed id, bytes32 indexed seed, address[] winners, uint256[] amounts);
@@ -143,10 +144,12 @@ contract Community {
     // Raffle creation (data-only)
     // Add name back to creating raffles
     function createRaffle(
+        string calldata name,
         address token,
         uint64 endTime,
         uint32 winnersCount,
-        uint256 totalPrize
+        uint256 totalPrize,
+        bool requireMembership
     ) external onlyAdmin returns (uint256 id) {
         if (winnersCount == 0) revert NoWinners();
         if (endTime <= block.timestamp) revert EndTimeInPast();
@@ -154,15 +157,16 @@ contract Community {
 
         id = _nextRaffleId++;
         Raffle storage r = _raffles[id];
+        r.name = name;
         r.token = token;
         r.endTime = endTime;
         r.winnersCount = winnersCount;
         r.status = RaffleStatus.Upcoming;
         r.totalPrize = totalPrize;
-        r.requireCommunityMembership = true;
+        r.requireCommunityMembership = requireMembership;
 
         _raffleIds.push(id);
-        emit RaffleCreated(id, token, endTime, winnersCount, totalPrize);
+        emit RaffleCreated(id, name, token, endTime, winnersCount, totalPrize, requireMembership);
 
         // Save to factory for global view
         IRaffylFactory(factory).onRaffleCreated(id);
@@ -180,24 +184,21 @@ contract Community {
 
     // Participant registration
     // update this to take an array of addresses
-    function registerForRaffle(uint256 id) external {
+    function registerForRaffle(uint256 id, address[] calldata users) external onlyAdmin {
         Raffle storage r = _raffles[id];
         if (r.status != RaffleStatus.Active) revert NotActive();
         if (block.timestamp >= r.endTime) revert RaffleEnded();
-        address user = msg.sender;
-        if (r.isParticipant[user]) revert AlreadyJoined();
-        if (r.requireCommunityMembership) {
-            if (!_registered[user]) revert NotCommunityMember();
+        
+        for (uint i = 0; i < users.length; i++) {
+            address user = users[i];
+            if (r.isParticipant[user]) revert AlreadyJoined();
+            if (r.requireCommunityMembership) {
+                if (!_registered[user]) revert NotCommunityMember();
+            }
+            r.isParticipant[user] = true;
+            r.participants.push(user);
+            emit RegisteredForRaffle(id, user);
         }
-        r.isParticipant[user] = true;
-        r.participants.push(user);
-        emit RegisteredForRaffle(id, user);
-    } 
-
-    function setRequireCommunityMembership(uint256 id, bool value) external onlyAdmin {
-        Raffle storage r = _raffles[id];
-        if (r.status != RaffleStatus.Upcoming) revert NotUpcoming();
-        r.requireCommunityMembership = value;
     }
 
     // Draw winners
