@@ -1,7 +1,17 @@
-import { ArrowRight, Gem, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { useCountdown } from "@/hooks/useCountdown";
+import { useRouter } from 'next/navigation';
 
 export function Hero() {
+  const router = useRouter();
+  
+    // 60 seconds countdown
+    const { formattedTime } = useCountdown(60, () => {
+      router.push('/dashboard');
+    });
+
+    
   return (
     <section className="relative overflow-hidden">
       {/* Background elements */}
@@ -59,6 +69,13 @@ export function Hero() {
               <span>Live on Lisk Network</span>
             </div>
           </div>
+            {/* Countdown Overlay */}
+              <div className="text-sm text-gray-300">
+                Redirecting in
+                <span className="text-md font-bold text-teal-400 pl-2">
+                  {formattedTime}
+                </span>
+              </div>
         </div>
       </div>
       
