@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import { IERC20 } from "./interfaces/IERC20.sol";
-import { SafeTransferLib } from "./libraries/SafeTransferLib.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
  * @title TimelockVault
@@ -10,13 +10,11 @@ import { SafeTransferLib } from "./libraries/SafeTransferLib.sol";
  *         Factory orchestrates payouts; Community performs funding and locking.
  */
 contract TimelockVault {
-    using SafeTransferLib for IERC20;
+    using SafeERC20 for IERC20;
 
     address public immutable community;
     address public immutable factory;
 
-    // token => total balance held
-    mapping(address => uint256) public balances;
     // token => total reserved (locked but not yet paid)
     mapping(address => uint256) public reservedTotal;
 
@@ -31,11 +29,23 @@ contract TimelockVault {
     // raffleId => token => lock
     mapping(uint256 => mapping(address => Lock)) public locks;
 
-    event DepositedETH(address indexed from, uint256 amount);
-    event DepositedToken(address indexed from, address indexed token, uint256 amount);
-    event Locked(uint256 indexed raffleId, address indexed token, uint256 amount, uint64 endTime);
-    event Paid(uint256 indexed raffleId, address indexed token, address indexed to, uint256 amount);
-    event BatchPaid(uint256 indexed raffleId, address indexed token, uint256 totalPaid);
+    event Locked(
+        uint256 indexed raffleId,
+        address indexed token,
+        uint256 amount,
+        uint64 endTime
+    );
+    event Paid(
+        uint256 indexed raffleId,
+        address indexed token,
+        address indexed to,
+        uint256 amount
+    );
+    event BatchPaid(
+        uint256 indexed raffleId,
+        address indexed token,
+        uint256 totalPaid
+    );
     event Disbursed(uint256 indexed raffleId, address indexed token);
 
     modifier onlyCommunity() {
@@ -55,32 +65,22 @@ contract TimelockVault {
         factory = _factory;
     }
 
-    receive() external payable {
-        revert("USE_DEPOSIT");
-    }
-
-    // Funding via Community
-    function depositETH() external payable onlyCommunity {
-        require(msg.value > 0, "ZERO_AMOUNT");
-        balances[address(0)] += msg.value;
-        emit DepositedETH(msg.sender, msg.value);
-    }
-
-    function recordTokenDeposit(address token, uint256 amount) external onlyCommunity {
-        require(token != address(0), "INVALID_TOKEN");
-        require(amount > 0, "ZERO_AMOUNT");
-        balances[token] += amount;
-        emit DepositedToken(msg.sender, token, amount);
-    }
+    receive() external payable {}
 
     // Lock funds for a raffle
-    function lockFunds(uint256 raffleId, address token, uint256 amount, uint64 endTime) external onlyCommunity {
+    function lockFunds(
+        uint256 raffleId,
+        address token,
+        uint256 amount,
+        uint64 endTime
+    ) external onlyCommunity {
         require(endTime > block.timestamp, "ENDTIME_IN_PAST");
         require(amount > 0, "ZERO_AMOUNT");
         Lock storage L = locks[raffleId][token];
         require(!L.locked, "ALREADY_LOCKED");
         // ensure sufficient available (balance - reserved)
-        uint256 available = balances[token] - reservedTotal[token];
+        uint256 currentBalance = getBalance(token);
+        uint256 available = currentBalance - reservedTotal[token];
         require(available >= amount, "INSUFFICIENT_AVAILABLE");
         L.amount = amount;
         L.endTime = endTime;
@@ -89,33 +89,21 @@ contract TimelockVault {
         emit Locked(raffleId, token, amount, endTime);
     }
 
-    function canDisburse(uint256 raffleId, address token) public view returns (bool) {
+    function canDisburse(
+        uint256 raffleId,
+        address token
+    ) public view returns (bool) {
         Lock storage L = locks[raffleId][token];
         return L.locked && !L.disbursed && block.timestamp >= L.endTime;
     }
 
     // Factory-triggered payouts
-    function payWinner(uint256 raffleId, address token, address to, uint256 amount) external onlyFactory {
-        require(to != address(0), "INVALID_TO");
-        require(amount > 0, "ZERO_AMOUNT");
-        require(canDisburse(raffleId, token), "TIMELOCK_ACTIVE");
-        Lock storage L = locks[raffleId][token];
-        require(L.paid + amount <= L.amount, "OVERPAY");
-
-        if (token == address(0)) {
-            (bool success, ) = payable(to).call{value: amount}("");
-            require(success, "ETH_TRANSFER_FAILED");
-        } else {
-            IERC20(token).safeTransfer(to, amount);
-        }
-
-        L.paid += amount;
-        balances[token] -= amount;
-        reservedTotal[token] -= amount;
-        emit Paid(raffleId, token, to, amount);
-    }
-
-    function batchPay(uint256 raffleId, address token, address[] calldata tos, uint256[] calldata amounts) external onlyFactory {
+    function batchPay(
+        uint256 raffleId,
+        address token,
+        address[] calldata tos,
+        uint256[] calldata amounts
+    ) external onlyFactory {
         require(tos.length == amounts.length, "LEN_MISMATCH");
         require(canDisburse(raffleId, token), "TIMELOCK_ACTIVE");
         Lock storage L = locks[raffleId][token];
@@ -133,29 +121,27 @@ contract TimelockVault {
                 IERC20(token).safeTransfer(to, amount);
             }
             L.paid += amount;
-            balances[token] -= amount;
             reservedTotal[token] -= amount;
             total += amount;
             emit Paid(raffleId, token, to, amount);
         }
         emit BatchPaid(raffleId, token, total);
-    }
 
-    function markDisbursed(uint256 raffleId, address token) external onlyFactory {
-        Lock storage L = locks[raffleId][token];
-        require(L.locked, "NOT_LOCKED");
-        require(L.paid == L.amount, "NOT_FULLY_PAID");
-        require(!L.disbursed, "ALREADY_DISBURSED");
-        L.disbursed = true;
-        emit Disbursed(raffleId, token);
+        if (L.paid == L.amount) {
+            L.disbursed = true;
+            emit Disbursed(raffleId, token);
+        }
     }
 
     // Views
-    function getBalance(address token) external view returns (uint256) {
-        return balances[token];
+    function getBalance(address token) public view returns (uint256) {
+        if (token == address(0)) {
+            return address(this).balance;
+        }
+        return IERC20(token).balanceOf(address(this));
     }
 
     function getAvailable(address token) external view returns (uint256) {
-        return balances[token] - reservedTotal[token];
+        return getBalance(token) - reservedTotal[token];
     }
 }

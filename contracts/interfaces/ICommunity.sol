@@ -17,12 +17,9 @@ interface ICommunity {
         address token,
         uint64 endTime,
         uint32 winnersCount,
-        uint8 mode,
         uint8 status,
         uint256 totalPrize,
-        uint256 remainingPrize,
         bool requireCommunityMembership,
-        string memory metaCID,
         uint256 participantsCount
     );
 
@@ -30,5 +27,5 @@ interface ICommunity {
     function getWinners(uint256 id) external view returns (address[] memory winners, uint256[] memory amounts);
 
     // Factory marks claims to prevent duplicate payouts
-    function recordClaim(uint256 id, address winner) external;
+    function markRafflePaidOut(uint256 id) external;
 }

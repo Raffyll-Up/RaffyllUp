@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import { ICommunity } from "./interfaces/ICommunity.sol";
-import { Community } from "./Community.sol";
+import {ICommunity} from "./interfaces/ICommunity.sol";
+import {Community} from "./Community.sol";
 
 interface ITimelockVault {
-    function batchPay(uint256 raffleId, address token, address[] calldata tos, uint256[] calldata amounts) external;
+    function batchPay(
+        uint256 raffleId,
+        address token,
+        address[] calldata tos,
+        uint256[] calldata amounts
+    ) external;
+
     function markDisbursed(uint256 raffleId, address token) external;
 }
 
@@ -20,7 +26,6 @@ interface ITimelockVault {
 contract RaffylFactory {
     // Global registries
     address[] private _communities;
-    mapping(bytes32 => address) public ensToCommunity;
     mapping(address => bool) public isCommunity;
 
     struct RaffleRef {
@@ -32,20 +37,22 @@ contract RaffylFactory {
     // Uses top-level ITimelockVault interface declared above
 
     // Events
-    event CommunityCreated(address indexed admin, address indexed community, string ensName);
+    event CommunityCreated(address indexed admin, address indexed community);
     event RaffleRegistered(address indexed community, uint256 indexed id);
-    event BatchPayoutProcessed(address indexed community, uint256 indexed id, uint256 totalPaid);
+    event BatchPayoutProcessed(
+        address indexed community,
+        uint256 indexed id,
+        uint256 totalPaid
+    );
 
     // Community lifecycle
-    function createCommunity(string calldata ensName) external returns (address community) {
-        bytes32 key = keccak256(bytes(ensName));
-        require(ensToCommunity[key] == address(0), "ENS_ALREADY_REGISTERED");
-        // Community constructor expects (admin, ensName, factory)
-        community = address(new Community(msg.sender, ensName, address(this)));
-        ensToCommunity[key] = community;
+    // Add name back to creating communities
+    function createCommunity() external returns (address community) {
+        // Community constructor expects (admin, factory)
+        community = address(new Community(msg.sender, address(this)));
         _communities.push(community);
         isCommunity[community] = true;
-        emit CommunityCreated(msg.sender, community, ensName);
+        emit CommunityCreated(msg.sender, community);
     }
 
     // Views
@@ -53,12 +60,12 @@ contract RaffylFactory {
         return _communities;
     }
 
-    function getCommunityByENS(string calldata ensName) external view returns (address) {
-        return ensToCommunity[keccak256(bytes(ensName))];
-    }
-
     // Global raffles view (parallel arrays for ABI simplicity)
-    function getAllRaffles() external view returns (address[] memory communities, uint256[] memory ids) {
+    function getAllRaffles()
+        external
+        view
+        returns (address[] memory communities, uint256[] memory ids)
+    {
         uint256 n = _raffles.length;
         communities = new address[](n);
         ids = new uint256[](n);
@@ -80,23 +87,14 @@ contract RaffylFactory {
         require(isCommunity[msg.sender], "ONLY_COMMUNITY");
 
         // Read winners and amounts from Community
-        (address[] memory winners, uint256[] memory amounts) = ICommunity(msg.sender).getWinners(id);
+        (address[] memory winners, uint256[] memory amounts) = ICommunity(
+            msg.sender
+        ).getWinners(id);
         require(winners.length == amounts.length, "LEN_MISMATCH");
         require(winners.length > 0, "NO_WINNERS");
 
         // Read core raffle to get the token
-        (
-            address token,
-            /*uint64 endTime*/,
-            /*uint32 winnersCount*/,
-            /*uint8 mode*/,
-            /*uint8 status*/,
-            uint256 totalPrize,
-            /*uint256 remainingPrize*/,
-            /*bool requireCommunityMembership*/,
-            /*string memory metaCID*/,
-            /*uint256 participantsCount*/
-        ) = ICommunity(msg.sender).getRaffleCore(id);
+        (address token, , , , , , ) = ICommunity(msg.sender).getRaffleCore(id);
 
         // Access the community vault
         address vaultAddr = ICommunity(msg.sender).vault();
@@ -105,13 +103,10 @@ contract RaffylFactory {
         // Execute batch payout (TimelockVault enforces timelock and totals)
         vault.batchPay(id, token, winners, amounts);
 
-        // Mark claims inside Community to prevent duplicates
-        for (uint256 i = 0; i < winners.length; i++) {
-            ICommunity(msg.sender).recordClaim(id, winners[i]);
-        }
-
         // Finalize disbursement (requires full paid == locked)
         vault.markDisbursed(id, token);
+
+        ICommunity(msg.sender).markRafflePaidOut(id);
 
         emit BatchPayoutProcessed(msg.sender, id, _sum(amounts));
         // Community updates its own raffle status to PaidOut once all claimed via recordClaim path.
