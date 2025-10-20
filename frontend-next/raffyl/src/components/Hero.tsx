@@ -24,7 +24,7 @@ export function Hero() {
         <div className="text-center">
           <div className="inline-flex items-center gap-2 bg-gray-900 border border-gray-800 text-teal-400 text-xs font-medium px-3 py-1.5 rounded-full mb-6">
             <Sparkles className="w-4 h-4" />
-            <span>Decentralized Raffles on Base Network</span>
+            <span>Decentralized Raffles on Lisk Network</span>
           </div>
           
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white max-w-4xl mx-auto leading-tight">
