@@ -65,11 +65,11 @@ export default function OrganizationPage({
                   {activeTab === 'settings' && 'Settings'}
                 </h1>
                 <p className="text-gray-400">
-                  {activeTab === 'dashboard' && 'Overview of your organization\'s performance and activities.'}
-                  {activeTab === 'raffles' && 'Manage and track all your organization\'s raffles.'}
+                  {activeTab === 'dashboard' && 'Overview of your community\'s performance and activities.'}
+                  {activeTab === 'raffles' && 'Manage and track all your community\'s raffles.'}
                   {activeTab === 'participants' && 'View and manage all participants across your raffles.'}
-                  {activeTab === 'funds' && 'Track and manage your organization\'s funds and transactions.'}
-                  {activeTab === 'settings' && 'Manage your organization\'s settings.'}
+                  {activeTab === 'funds' && 'Track and manage your community\'s funds and transactions.'}
+                  {activeTab === 'settings' && 'Manage your community\'s settings.'}
                 </p>
               </div>
               <Tabs 
@@ -77,13 +77,6 @@ export default function OrganizationPage({
                 onValueChange={(value) => setActiveTab(value as TabValue)}
                 className="hidden md:block"
               >
-                <TabsList className="bg-gray-900/40 border border-gray-800">
-                  <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                  <TabsTrigger value="raffles">Raffles</TabsTrigger>
-                  <TabsTrigger value="participants">Participants</TabsTrigger>
-                  <TabsTrigger value="funds">Funds</TabsTrigger>
-                  <TabsTrigger value="settings">Settings</TabsTrigger>
-                </TabsList>
               </Tabs>
             </div>
 

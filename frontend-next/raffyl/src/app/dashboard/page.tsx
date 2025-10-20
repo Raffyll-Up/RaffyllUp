@@ -4,8 +4,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Rocket, Plus, Bell, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { CreateCommunityDialog } from "@/components/organization/CreateOrganizationDialog";
 
-type Organization = {
+type Communities = {
   id: string;
   name: string;
   description: string;
@@ -14,7 +15,7 @@ type Organization = {
   isFeatured?: boolean;
 };
 
-const myOrganizations: Organization[] = [
+const myCommunities: Communities[] = [
   {
     id: '1',
     name: 'Tech Innovators Inc.',
@@ -66,7 +67,7 @@ const myOrganizations: Organization[] = [
   }
 ];
 
-const featuredOrganizations: Organization[] = [
+const featuredCommunities: Communities[] = [
   {
     id: 'f1',
     name: 'FutureTech Ventures',
@@ -75,13 +76,13 @@ const featuredOrganizations: Organization[] = [
     logo: '/placeholder-org.png',
     isFeatured: true
   },
-  // Add more featured organizations as needed
+  // Add more featured communities as needed
 ];
 
 const gettingStartedSteps = [
   {
-    title: 'Create Your Organization',
-    description: 'Set up your organization profile and invite team members',
+    title: 'Create Your Communities',
+    description: 'Set up your community profile and invite team members',
     buttonText: 'Start Creating',
     icon: <Plus className="h-5 w-5" />
   },
@@ -105,40 +106,42 @@ export default function DashboardPage() {
       <div className="absolute inset-0 -z-10 bg-[url('/grid-pattern.svg')] bg-center [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
       
       <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 pt-24">
-        {/* Create Organization Banner */}
+        {/* Create Community Banner */}
         <div className="bg-gradient-to-r from-teal-500 to-emerald-600 rounded-xl p-6 mb-8 text-white shadow-lg">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h2 className="text-2xl font-bold mb-2">Create Your Organization</h2>
+              <h2 className="text-2xl font-bold mb-2">Create Your Community</h2>
               <p className="text-teal-100">Start building your community and launch your first raffle today</p>
             </div>
-            <Button className="bg-white text-teal-600 hover:bg-teal-50 font-medium">
-              Create Organization
-            </Button>
+            {/* <Button className="bg-white text-teal-600 hover:bg-teal-50 font-medium"> */}
+              <CreateCommunityDialog />
+            {/* </Button> */}
           </div>
         </div>
 
-        {/* My Organizations */}
+        {/* Communities */}
         <section className="mb-12">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-white">My Organizations</h2>
-            <Button variant="ghost" className="text-teal-400 hover:bg-teal-900/30 hover:text-teal-300">
-              View All <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
+            <h2 className="text-xl font-semibold text-white">Communities</h2>
+            <div className="flex items-center gap-2"> 
+              <Button variant="ghost" className="text-teal-400 hover:bg-teal-900/30 hover:text-teal-300">
+                View All <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {myOrganizations.slice(0, 4).map((org) => (
-              <Link href={`/${org.id}`} key={org.id}>
-              <Card key={org.id} className="bg-dark-secondary/30 backdrop-blur-sm border-dark-border hover:border-teal-500/30 transition-colors">
+            {myCommunities.slice(0, 4).map((community) => (
+              <Link href={`/${community.id}`} key={community.id}>
+              <Card key={community.id} className="bg-dark-secondary/30 backdrop-blur-sm border-dark-border hover:border-teal-500/30 transition-colors">
                 <CardContent className="p-4">
                   <div className="flex items-center space-x-4">
                     <Avatar className="h-12 w-12 bg-teal-500/20 border border-teal-500/30">
-                      <AvatarImage src={org.logo} />
-                      <AvatarFallback className="bg-transparent text-teal-400">{org.name.charAt(0)}</AvatarFallback>
+                      <AvatarImage src={community.logo} />
+                      <AvatarFallback className="bg-transparent text-teal-400">{community.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <h3 className="font-medium text-white">{org.name}</h3>
-                      <p className="text-sm text-gray-400">{org.members} members</p>
+                      <h3 className="font-medium text-white">{community.name}</h3>
+                      <p className="text-sm text-gray-400">{community.members} members</p>
                     </div>
                   </div>
                 </CardContent>
@@ -149,19 +152,19 @@ export default function DashboardPage() {
         </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Featured Organizations */}
+          {/* Raffles */}
           <section className="lg:col-span-2">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-white">Featured Organizations</h2>
+              <h2 className="text-xl font-semibold text-white">Raffles</h2>
               <Button variant="ghost" className="text-teal-400 hover:bg-teal-900/30 hover:text-teal-300">
                 See More <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {featuredOrganizations.map((org) => (
-                <Link href={`/${org.id}`} key={org.id}>
-                <Card key={org.id} className="bg-dark-secondary/30 backdrop-blur-sm border-dark-border hover:border-teal-500/30 transition-colors">
-                  {org.isFeatured && (
+              {featuredCommunities.map((community) => (
+                <Link href={`/${community.id}`} key={community.id}>
+                <Card key={community.id} className="bg-dark-secondary/30 backdrop-blur-sm border-dark-border hover:border-teal-500/30 transition-colors">
+                  {community.isFeatured && (
                     <div className="absolute top-2 right-2">
                       <Badge className="bg-teal-500/20 text-teal-400 border-teal-500/30">
                         Featured
@@ -171,12 +174,12 @@ export default function DashboardPage() {
                   <CardContent className="p-6">
                     <div className="flex items-center space-x-4">
                       <Avatar className="h-16 w-16 bg-teal-500/20 border border-teal-500/30">
-                        <AvatarImage src={org.logo} />
-                        <AvatarFallback className="bg-transparent text-teal-400">{org.name.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={community.logo} />
+                        <AvatarFallback className="bg-transparent text-teal-400">{community.name.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="font-medium text-lg text-white">{org.name}</h3>
-                        <p className="text-sm text-gray-400 mb-3">{org.description}</p>
+                        <h3 className="font-medium text-lg text-white">{community.name}</h3>
+                        <p className="text-sm text-gray-400 mb-3">{community.description}</p>
                         <Button variant="outline" size="sm" className="border-teal-500/30 text-teal-800 hover:bg-teal-500/10 hover:border-teal-400/50">
                           View Details
                         </Button>

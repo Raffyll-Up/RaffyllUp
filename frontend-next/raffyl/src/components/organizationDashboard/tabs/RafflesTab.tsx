@@ -5,9 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Plus, Filter, MoreHorizontal, Calendar, Users, Award } from "lucide-react";
+import { Search, Filter, MoreHorizontal, Calendar, Users, Award } from "lucide-react";
 import { rafflesData } from "@/lib/data";
-import { Progress } from "@/components/ui/progress";
+import { CreateRaffleModal } from "@/components/raffles/CreateRaffleModal";
+import { RaffleDetailsModal } from "@/components/raffles/RaffleDetailsModal";
+import { Raffle } from "@/lib/data";
 
 const statusVariant = {
   Active: 'bg-green-500/20 text-green-400',
@@ -19,12 +21,27 @@ const statusVariant = {
 export function RafflesTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [selectedRaffle, setSelectedRaffle] = useState<Raffle | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const filteredRaffles = rafflesData.filter(raffle => {
     const matchesSearch = raffle.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || raffle.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const handleRaffleClick = (raffle: Raffle) => {
+    setSelectedRaffle(raffle);
+    setIsDetailsOpen(true);
+  };
+
+  const handleJoinRaffle = async (raffleId: string) => {
+    console.log('Joining raffle:', raffleId);
+    // TODO: Connect to your smart contract here
+    // Example:
+    // await contract.joinRaffle(raffleId, { value: ticketPrice });
+    // Then refresh the raffles list
+  };
 
   return (
     <div className="space-y-6">
@@ -48,19 +65,17 @@ export function RafflesTab() {
                   <div className="flex items-center gap-2">
                     <Filter className="h-4 w-4 text-gray-400" />
                     <SelectValue placeholder="Filter by status" />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border-gray-800">
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Upcoming">Upcoming</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
-                    <SelectItem value="Draft">Draft</SelectItem>
-                  </SelectContent>
-                </Select>
-              <Button className="bg-blue-600 hover:bg-blue-700 whitespace-nowrap">
-                <Plus className="mr-2 h-4 w-4" /> Create Raffle
-              </Button>
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="bg-gray-900 border-gray-800">
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="Active">Active</SelectItem>
+                  <SelectItem value="Upcoming">Upcoming</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
+                  <SelectItem value="Draft">Draft</SelectItem>
+                </SelectContent>
+              </Select>
+              <CreateRaffleModal />
             </div>
           </div>
         </CardContent>
@@ -83,7 +98,11 @@ export function RafflesTab() {
             <TableBody>
               {filteredRaffles.length > 0 ? (
                 filteredRaffles.map((raffle) => (
-                  <TableRow key={raffle.id} className="border-gray-800 hover:bg-gray-800/30">
+                  <TableRow 
+                    key={raffle.id} 
+                    className="border-gray-800 hover:bg-gray-800/30 cursor-pointer"
+                    onClick={() => handleRaffleClick(raffle)}
+                  >
                     <TableCell>
                       <div className="font-medium">{raffle.name}</div>
                       <div className="text-sm text-gray-400">ID: {raffle.id}</div>
@@ -93,26 +112,21 @@ export function RafflesTab() {
                         {raffle.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      <div className="font-medium">{raffle.prizePool}</div>
-                      <div className="text-xs text-gray-400">Total prize</div>
-                    </TableCell>
+                    <TableCell className="font-medium">{raffle.prizePool}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4 text-gray-400" />
-                        <span>1.2k</span>
+                        <span>{raffle.ticketsSold || '0'}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm">
-                          {raffle.startDate} - {raffle.endDate}
-                        </span>
+                      <div className="flex items-center gap-2 text-sm text-gray-400">
+                        <Calendar className="h-4 w-4" />
+                        <span>{raffle.startDate} - {raffle.endDate}</span>
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -120,7 +134,7 @@ export function RafflesTab() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center text-gray-400">
+                  <TableCell colSpan={6} className="text-center py-8 text-gray-400">
                     No raffles found matching your criteria.
                   </TableCell>
                 </TableRow>
@@ -129,42 +143,6 @@ export function RafflesTab() {
           </Table>
         </div>
       </Card>
-
-      <Card className="bg-gray-900/40 border-gray-800">
-  <CardContent className="p-6">
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {filteredRaffles.map(raffle => (
-        <Card key={raffle.id} className="bg-gray-900 border-gray-800 hover:border-blue-500/50 transition-colors">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="font-medium text-lg">{raffle.name}</h3>
-              <Badge className={statusVariant[raffle.status as keyof typeof statusVariant]}>
-                {raffle.status}
-              </Badge>
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm text-gray-400">
-                <Award className="h-4 w-4" />
-                <span>{raffle.prizePool}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-400">
-                <Users className="h-4 w-4" />
-                <span>1.2k Participants</span>
-              </div>
-              <div className="pt-3">
-                <Progress value={75} className="h-2" />
-                <div className="flex justify-between text-xs text-gray-400 mt-1">
-                  <span>15 days left</span>
-                  <span>75% filled</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  </CardContent>
-</Card>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -210,6 +188,29 @@ export function RafflesTab() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Raffle Details Modal */}
+      {selectedRaffle && (
+        <RaffleDetailsModal
+          raffle={{
+            ...selectedRaffle,
+            // Add any additional properties that might be needed
+            description: selectedRaffle.description || `Join ${selectedRaffle.name} for a chance to win amazing prizes!`,
+            totalTickets: selectedRaffle.totalTickets || 1000,
+            ticketsSold: selectedRaffle.ticketsSold || Math.floor(Math.random() * 500) + 50,
+            maxTicketsPerUser: 10,
+            tokenAddress: '0x0000000000000000000000000000000000000000', // ETH
+            tokenSymbol: 'ETH',
+            tokenDecimals: 18,
+            winnersCount: selectedRaffle.winnersCount || 1,
+            winners: selectedRaffle.winners || [],
+            requireMembership: selectedRaffle.requireMembership || false
+          }}
+          open={isDetailsOpen}
+          onOpenChange={setIsDetailsOpen}
+          onJoinRaffle={handleJoinRaffle}
+        />
+      )}
     </div>
   );
 }
