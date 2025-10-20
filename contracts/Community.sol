@@ -9,6 +9,7 @@ import { RaffleHelpers } from "./libraries/RaffleHelpers.sol";
 interface IRaffylFactory {
     function onRaffleCreated(uint256 id) external;
     function processBatchPayout(uint256 id) external;
+    function treasury() external view returns (address);
 }
 
 contract Community {
@@ -57,11 +58,14 @@ contract Community {
 
     event FundedETH(address indexed from, uint256 amount);
     event FundedToken(address indexed from, address indexed token, uint256 amount);
+    event WithdrawnETH(address indexed to, uint256 amount);
+    event WithdrawnToken(address indexed to, address indexed token, uint256 amount);
 
     event RaffleCreated(uint256 indexed id, string name, address indexed token, uint64 endTime, uint32 winnersCount, uint256 totalPrize, bool requireCommunityMembership);
     event RaffleLocked(uint256 indexed id, address indexed token, uint256 amount, uint64 endTime);
     event RegisteredForRaffle(uint256 indexed id, address indexed user);
     event WinnersDrawn(uint256 indexed id, bytes32 indexed seed, address[] winners, uint256[] amounts);
+    event RaffleCancelled(uint256 indexed id);
 
     error OnlyAdmin();
     error OnlyFactory();
@@ -78,6 +82,7 @@ contract Community {
     error NotCommunityMember();
     error NotEnded();
     error NotDrawn();
+    error ParticipantsExist();
     error InvalidRaffleID();
 
     modifier onlyAdmin() {
@@ -137,6 +142,17 @@ contract Community {
         emit FundedToken(msg.sender, token, amount);
     }
 
+    function withdraw(address token, uint256 amount) external onlyAdmin {
+        require(amount > 0, "ZERO_AMOUNT");
+        vault.withdrawAvailable(token, admin, amount);
+
+        if (token == address(0)) {
+            emit WithdrawnETH(admin, amount);
+        } else {
+            emit WithdrawnToken(admin, token, amount);
+        }
+    }
+
     function getBalance(address token) external view returns (uint256) {
         return vault.getBalance(token);
     }
@@ -177,14 +193,26 @@ contract Community {
         Raffle storage r = _raffles[id];
         if (r.status != RaffleStatus.Upcoming) revert NotUpcoming();
         if (r.endTime <= block.timestamp) revert EndTimeInPast();
-        vault.lockFunds(id, r.token, r.totalPrize, r.endTime);
+
+        uint256 prize = r.totalPrize;
+        address treasury = IRaffylFactory(factory).treasury();
+        if (treasury != address(0)) {
+            uint256 fee = (prize * 1) / 100;
+            if (fee > 0) {
+                prize -= fee;
+                vault.sendFee(r.token, treasury, fee);
+            }
+        }
+
+        r.totalPrize = prize;
+        vault.lockFunds(id, r.token, prize, r.endTime);
         r.status = RaffleStatus.Active;
-        emit RaffleLocked(id, r.token, r.totalPrize, r.endTime);
+        emit RaffleLocked(id, r.token, prize, r.endTime);
     }
 
     // Participant registration
     // update this to take an array of addresses
-    function registerForRaffle(uint256 id, address[] calldata users) external onlyAdmin {
+    function registerForRaffle(uint256 id, address[] calldata users) external {
         Raffle storage r = _raffles[id];
         if (r.status != RaffleStatus.Active) revert NotActive();
         if (block.timestamp >= r.endTime) revert RaffleEnded();
@@ -231,6 +259,19 @@ contract Community {
         r.status = RaffleStatus.Drawn;
         emit WinnersDrawn(id, seed, sel, amounts);
         IRaffylFactory(factory).processBatchPayout(id);
+    }
+
+    function cancelRaffle(uint256 id) external onlyAdmin {
+        Raffle storage r = _raffles[id];
+        if (r.status != RaffleStatus.Active) revert NotActive();
+        if (block.timestamp < r.endTime) revert NotEnded();
+        if (r.participants.length > 0) revert ParticipantsExist();
+
+        // Unlock funds in the vault and update status
+        r.status = RaffleStatus.Cancelled;
+        vault.unlockFunds(id, r.token);
+
+        emit RaffleCancelled(id);
     }
 
     function markRafflePaidOut(uint256 id) external onlyFactory {

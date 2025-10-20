@@ -1,49 +1,79 @@
 const { ethers, run } = require("hardhat");
 
 async function main() {
-  // Deploy RaffylFactory
+  const [deployer] = await ethers.getSigners();
+  console.log(`Deploying contracts with the account: ${deployer.address}`);
+
+  // 1. Deploy RaffylFactory
   const RaffylFactory = await ethers.getContractFactory("RaffylFactory");
   const raffylFactory = await RaffylFactory.deploy();
   await raffylFactory.waitForDeployment();
   const raffylFactoryAddress = await raffylFactory.getAddress();
   console.log(`RaffylFactory deployed to: ${raffylFactoryAddress}`);
 
-  // Verify RaffylFactory
-  await run("verify:verify", {
-    address: raffylFactoryAddress,
-    constructorArguments: [],
-  });
-  console.log("RaffylFactory verified.");
+  // 2. Set Treasury on RaffylFactory
+  console.log("Setting treasury to deployer address...");
+  const tx = await raffylFactory.setTreasury(deployer.address);
+  await tx.wait();
+  console.log(`Treasury set to: ${deployer.address}`);
 
-  // Deploy Community
-  // The admin for Community will be the deployer of this script (msg.sender)
-  // The factory for Community will be the deployed RaffylFactory
-  const [deployer] = await ethers.getSigners();
-  const Community = await ethers.getContractFactory("Community");
-  const community = await Community.deploy(deployer.address, raffylFactoryAddress);
-  await community.waitForDeployment();
-  const communityAddress = await community.getAddress();
-  console.log(`Community deployed to: ${communityAddress}`);
+  // 3. Verify RaffylFactory (optional, may require waiting for block propagation)
+  console.log("Waiting for 30 seconds before verification...");
+  await new Promise(resolve => setTimeout(resolve, 30000));
+  try {
+    await run("verify:verify", {
+      address: raffylFactoryAddress,
+      constructorArguments: [],
+    });
+    console.log("RaffylFactory verified.");
+  } catch (error) {
+    console.error("RaffylFactory verification failed:", error.message);
+  }
 
-  // Verify Community
-  await run("verify:verify", {
-    address: communityAddress,
-    constructorArguments: [deployer.address, raffylFactoryAddress],
-  });
-  console.log("Community verified.");
+  // 4. Deploy Community via the Factory
+  console.log("Deploying Community via RaffylFactory...");
+  const communityName = "My Test Community";
+  const createCommunityTx = await raffylFactory.createCommunity(communityName);
+  const receipt = await createCommunityTx.wait();
+  
+  const event = receipt.logs.find(log => log.eventName === 'CommunityCreated');
+  if (!event) {
+    throw new Error("CommunityCreated event not found in transaction receipt");
+  }
+  const communityAddress = event.args.community;
+  const communityAdmin = event.args.admin;
+  console.log(`Community '${communityName}' deployed to: ${communityAddress}`);
 
-  // At this point, TimelockVault is deployed by the Community contract.
-  // We can get its address from the Community contract if needed.
+  // 5. Verify Community
+  console.log("Waiting for 30 seconds before verification...");
+  await new Promise(resolve => setTimeout(resolve, 30000));
+  try {
+    await run("verify:verify", {
+      address: communityAddress,
+      constructorArguments: [communityAdmin, raffylFactoryAddress],
+    });
+    console.log("Community verified.");
+  } catch (error) {
+    console.error("Community verification failed:", error.message);
+  }
+
+  // 6. Get TimelockVault address and verify
+  const community = await ethers.getContractAt("Community", communityAddress);
   const timelockVaultAddress = await community.vault();
-  console.log(`TimelockVault deployed by Community to: ${timelockVaultAddress}`);
+  console.log(`TimelockVault for Community found at: ${timelockVaultAddress}`);
 
-  // Verify TimelockVault
-  // TimelockVault constructor arguments are (_community, _factory)
-  await run("verify:verify", {
-    address: timelockVaultAddress,
-    constructorArguments: [communityAddress, raffylFactoryAddress],
-  });
-  console.log("TimelockVault verified.");
+  // 7. Verify TimelockVault
+  console.log("Waiting for 30 seconds before verification...");
+  await new Promise(resolve => setTimeout(resolve, 30000));
+  try {
+    await run("verify:verify", {
+      address: timelockVaultAddress,
+      constructorArguments: [communityAddress, raffylFactoryAddress],
+    });
+    console.log("TimelockVault verified.");
+  } catch (error) {
+    console.error("TimelockVault verification failed:", error.message);
+  }
 }
 
 main()

@@ -22,6 +22,9 @@ interface ITimelockVault {
  *  - No per-raffle contracts. Raffles are structs stored inside Community.
  */
 contract RaffylFactory {
+    address public owner;
+    address public treasury;
+
     // Global registries
     address[] private _communities;
     mapping(address => bool) public isCommunity;
@@ -43,6 +46,22 @@ contract RaffylFactory {
         uint256 indexed id,
         uint256 totalPaid
     );
+    event TreasuryChanged(address indexed newTreasury);
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "NOT_OWNER");
+        _;
+    }
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    function setTreasury(address _treasury) external onlyOwner {
+        require(_treasury != address(0), "INVALID_ADDRESS");
+        treasury = _treasury;
+        emit TreasuryChanged(_treasury);
+    }
 
     // Community lifecycle
     // Add name back to creating communities

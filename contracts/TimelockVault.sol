@@ -47,6 +47,8 @@ contract TimelockVault {
         uint256 totalPaid
     );
     event Disbursed(uint256 indexed raffleId, address indexed token);
+    event Unlocked(uint256 indexed raffleId, address indexed token, uint256 amount);
+    event Withdrawn(address indexed token, address indexed to, uint256 amount);
 
     modifier onlyCommunity() {
         require(msg.sender == community, "ONLY_COMMUNITY");
@@ -87,6 +89,50 @@ contract TimelockVault {
         L.locked = true;
         reservedTotal[token] += amount;
         emit Locked(raffleId, token, amount, endTime);
+    }
+
+    function unlockFunds(
+        uint256 raffleId,
+        address token
+    ) external onlyCommunity {
+        Lock storage L = locks[raffleId][token];
+        require(L.locked, "NOT_LOCKED");
+        require(!L.disbursed, "ALREADY_DISBURSED");
+
+        uint256 amount = L.amount;
+        reservedTotal[token] -= amount;
+        
+        delete locks[raffleId][token];
+
+        emit Unlocked(raffleId, token, amount);
+    }
+
+    function sendFee(address token, address to, uint256 amount) external onlyCommunity {
+        require(amount > 0, "ZERO_AMOUNT");
+        uint256 available = getBalance(token) - reservedTotal[token];
+        require(available >= amount, "INSUFFICIENT_FOR_FEE");
+
+        if (token == address(0)) {
+            (bool success, ) = payable(to).call{value: amount}("");
+            require(success, "ETH_TRANSFER_FAILED");
+        } else {
+            IERC20(token).safeTransfer(to, amount);
+        }
+    }
+
+    function withdrawAvailable(address token, address to, uint256 amount) external onlyCommunity {
+        require(amount > 0, "ZERO_AMOUNT");
+        uint256 available = getBalance(token) - reservedTotal[token];
+        require(available >= amount, "INSUFFICIENT_AVAILABLE");
+
+        if (token == address(0)) {
+            (bool success, ) = payable(to).call{value: amount}("");
+            require(success, "ETH_TRANSFER_FAILED");
+        } else {
+            IERC20(token).safeTransfer(to, amount);
+        }
+
+        emit Withdrawn(token, to, amount);
     }
 
     function canDisburse(
