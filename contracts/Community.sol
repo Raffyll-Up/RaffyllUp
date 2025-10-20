@@ -23,6 +23,7 @@ contract Community {
         address token; // address(0) for ETH
         uint64 endTime;
         uint32 winnersCount;
+        uint32 maxParticipants;
         RaffleStatus status;
         uint256 totalPrize;
         bool requireCommunityMembership;
@@ -61,7 +62,7 @@ contract Community {
     event WithdrawnETH(address indexed to, uint256 amount);
     event WithdrawnToken(address indexed to, address indexed token, uint256 amount);
 
-    event RaffleCreated(uint256 indexed id, string name, address indexed token, uint64 endTime, uint32 winnersCount, uint256 totalPrize, bool requireCommunityMembership);
+    event RaffleCreated(uint256 indexed id, string name, address indexed token, uint64 endTime, uint32 winnersCount, uint32 maxParticipants, uint256 totalPrize, bool requireCommunityMembership);
     event RaffleLocked(uint256 indexed id, address indexed token, uint256 amount, uint64 endTime);
     event RegisteredForRaffle(uint256 indexed id, address indexed user);
     event WinnersDrawn(uint256 indexed id, bytes32 indexed seed, address[] winners, uint256[] amounts);
@@ -164,6 +165,7 @@ contract Community {
         address token,
         uint64 endTime,
         uint32 winnersCount,
+        uint32 maxParticipants,
         uint256 totalPrize,
         bool requireMembership
     ) external onlyAdmin returns (uint256 id) {
@@ -177,12 +179,13 @@ contract Community {
         r.token = token;
         r.endTime = endTime;
         r.winnersCount = winnersCount;
+        r.maxParticipants = maxParticipants;
         r.status = RaffleStatus.Upcoming;
         r.totalPrize = totalPrize;
         r.requireCommunityMembership = requireMembership;
 
         _raffleIds.push(id);
-        emit RaffleCreated(id, name, token, endTime, winnersCount, totalPrize, requireMembership);
+        emit RaffleCreated(id, name, token, endTime, winnersCount, maxParticipants, totalPrize, requireMembership);
 
         // Save to factory for global view
         IRaffylFactory(factory).onRaffleCreated(id);
@@ -218,6 +221,7 @@ contract Community {
         if (block.timestamp >= r.endTime) revert RaffleEnded();
         
         for (uint i = 0; i < users.length; i++) {
+            if (r.maxParticipants > 0 && r.participants.length >= r.maxParticipants) revert RaffleEnded();
             address user = users[i];
             if (r.isParticipant[user]) revert AlreadyJoined();
             if (r.requireCommunityMembership) {
@@ -233,7 +237,7 @@ contract Community {
     function drawWinners(uint256 id) external onlyAdmin {
         Raffle storage r = _raffles[id];
         if (r.status != RaffleStatus.Active) revert NotActive();
-        if (block.timestamp < r.endTime) revert NotEnded();
+        if (block.timestamp < r.endTime && (r.maxParticipants == 0 || r.participants.length < r.maxParticipants)) revert NotEnded();
 
         uint256 n = r.participants.length;
         uint32 k = r.winnersCount;
