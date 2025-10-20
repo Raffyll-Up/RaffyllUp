@@ -7,8 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, Plus, Filter, MoreHorizontal, Calendar, Users, Award } from "lucide-react";
 import { rafflesData } from "@/lib/data";
-
-// type RaffleStatus = 'Active' | 'Upcoming' | 'Completed' | 'Draft';
+import { Progress } from "@/components/ui/progress";
 
 const statusVariant = {
   Active: 'bg-green-500/20 text-green-400',
@@ -29,17 +28,6 @@ export function RafflesTab() {
 
   return (
     <div className="space-y-6">
-      {/* Header with Actions */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold">Raffles</h2>
-          <p className="text-gray-400">Manage and track all your raffles in one place</p>
-        </div>
-        <Button className="bg-blue-600 hover:bg-blue-700 whitespace-nowrap">
-          <Plus className="mr-2 h-4 w-4" /> Create Raffle
-        </Button>
-      </div>
-
       {/* Filters */}
       <Card className="bg-gray-900/40 border-gray-800">
         <CardContent className="p-4">
@@ -60,16 +48,19 @@ export function RafflesTab() {
                   <div className="flex items-center gap-2">
                     <Filter className="h-4 w-4 text-gray-400" />
                     <SelectValue placeholder="Filter by status" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent className="bg-gray-900 border-gray-800">
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Upcoming">Upcoming</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                  <SelectItem value="Draft">Draft</SelectItem>
-                </SelectContent>
-              </Select>
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 border-gray-800">
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Upcoming">Upcoming</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Draft">Draft</SelectItem>
+                  </SelectContent>
+                </Select>
+              <Button className="bg-blue-600 hover:bg-blue-700 whitespace-nowrap">
+                <Plus className="mr-2 h-4 w-4" /> Create Raffle
+              </Button>
             </div>
           </div>
         </CardContent>
@@ -138,6 +129,42 @@ export function RafflesTab() {
           </Table>
         </div>
       </Card>
+
+      <Card className="bg-gray-900/40 border-gray-800">
+  <CardContent className="p-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {filteredRaffles.map(raffle => (
+        <Card key={raffle.id} className="bg-gray-900 border-gray-800 hover:border-blue-500/50 transition-colors">
+          <CardContent className="p-6">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="font-medium text-lg">{raffle.name}</h3>
+              <Badge className={statusVariant[raffle.status as keyof typeof statusVariant]}>
+                {raffle.status}
+              </Badge>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm text-gray-400">
+                <Award className="h-4 w-4" />
+                <span>{raffle.prizePool}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-400">
+                <Users className="h-4 w-4" />
+                <span>1.2k Participants</span>
+              </div>
+              <div className="pt-3">
+                <Progress value={75} className="h-2" />
+                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <span>15 days left</span>
+                  <span>75% filled</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  </CardContent>
+</Card>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

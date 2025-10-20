@@ -102,9 +102,6 @@ export function DashboardTab() {
             <h2 className="text-xl font-semibold">Recent Raffles</h2>
             <p className="text-gray-400 text-sm">Track and manage your organization&apos;s raffles</p>
           </div>
-          <Button className="bg-blue-600 hover:bg-blue-700 whitespace-nowrap">
-            Create New Raffle
-          </Button>
         </div>
         
         <div className="overflow-hidden rounded-lg border border-gray-800">
