@@ -3,6 +3,7 @@ pragma solidity ^0.8.28;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ICommunity} from "./interfaces/ICommunity.sol";
 
 /**
  * @title TimelockVault
@@ -47,7 +48,11 @@ contract TimelockVault {
         uint256 totalPaid
     );
     event Disbursed(uint256 indexed raffleId, address indexed token);
-    event Unlocked(uint256 indexed raffleId, address indexed token, uint256 amount);
+    event Unlocked(
+        uint256 indexed raffleId,
+        address indexed token,
+        uint256 amount
+    );
     event Withdrawn(address indexed token, address indexed to, uint256 amount);
 
     modifier onlyCommunity() {
@@ -101,13 +106,17 @@ contract TimelockVault {
 
         uint256 amount = L.amount;
         reservedTotal[token] -= amount;
-        
+
         delete locks[raffleId][token];
 
         emit Unlocked(raffleId, token, amount);
     }
 
-    function sendFee(address token, address to, uint256 amount) external onlyCommunity {
+    function sendFee(
+        address token,
+        address to,
+        uint256 amount
+    ) external onlyCommunity {
         require(amount > 0, "ZERO_AMOUNT");
         uint256 available = getBalance(token) - reservedTotal[token];
         require(available >= amount, "INSUFFICIENT_FOR_FEE");
@@ -120,7 +129,11 @@ contract TimelockVault {
         }
     }
 
-    function withdrawAvailable(address token, address to, uint256 amount) external onlyCommunity {
+    function withdrawAvailable(
+        address token,
+        address to,
+        uint256 amount
+    ) external onlyCommunity {
         require(amount > 0, "ZERO_AMOUNT");
         uint256 available = getBalance(token) - reservedTotal[token];
         require(available >= amount, "INSUFFICIENT_AVAILABLE");
@@ -140,7 +153,26 @@ contract TimelockVault {
         address token
     ) public view returns (bool) {
         Lock storage L = locks[raffleId][token];
-        return L.locked && !L.disbursed && block.timestamp >= L.endTime;
+        if (!L.locked || L.disbursed) return false;
+
+        // Get raffle details from community
+        (
+            ,
+            uint64 endTime,
+            ,
+            uint32 maxParticipants,
+            ,
+            ,
+            ,
+            uint256 participantsCount
+        ) = ICommunity(community).getRaffleCore(raffleId);
+
+        // Can disburse if time ended OR max participants reached
+        bool timeEnded = block.timestamp >= endTime;
+        bool maxReached = maxParticipants > 0 &&
+            participantsCount >= maxParticipants;
+
+        return timeEnded || maxReached;
     }
 
     // Factory-triggered payouts

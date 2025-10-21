@@ -113,7 +113,7 @@ contract RaffylFactory {
         require(winners.length > 0, "NO_WINNERS");
 
         // Read core raffle to get the token
-        (address token, , , , , , ) = ICommunity(msg.sender).getRaffleCore(id);
+        (address token, , , , , , , ) = ICommunity(msg.sender).getRaffleCore(id);
 
         // Access the community vault
         address vaultAddr = ICommunity(msg.sender).vault();

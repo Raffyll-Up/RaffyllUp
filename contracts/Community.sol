@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { TimelockVault } from "./TimelockVault.sol";
-import { RaffleHelpers } from "./libraries/RaffleHelpers.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {TimelockVault} from "./TimelockVault.sol";
+import {RaffleHelpers} from "./libraries/RaffleHelpers.sol";
 
 interface IRaffylFactory {
     function onRaffleCreated(uint256 id) external;
+
     function processBatchPayout(uint256 id) external;
+
     function treasury() external view returns (address);
 }
 
@@ -16,7 +18,13 @@ contract Community {
     using SafeERC20 for IERC20;
 
     // Factory-coordinated raffle lifecycle
-    enum RaffleStatus { Upcoming, Active, Drawn, PaidOut, Cancelled }
+    enum RaffleStatus {
+        Upcoming,
+        Active,
+        Drawn,
+        PaidOut,
+        Cancelled
+    }
 
     struct Raffle {
         string name;
@@ -27,11 +35,9 @@ contract Community {
         RaffleStatus status;
         uint256 totalPrize;
         bool requireCommunityMembership;
-
         // participants
         address[] participants;
         mapping(address => bool) isParticipant;
-
         // winners
         address[] winners;
         uint256[] winnerAmounts;
@@ -58,14 +64,41 @@ contract Community {
     event Registered(address indexed user);
 
     event FundedETH(address indexed from, uint256 amount);
-    event FundedToken(address indexed from, address indexed token, uint256 amount);
+    event FundedToken(
+        address indexed from,
+        address indexed token,
+        uint256 amount
+    );
     event WithdrawnETH(address indexed to, uint256 amount);
-    event WithdrawnToken(address indexed to, address indexed token, uint256 amount);
+    event WithdrawnToken(
+        address indexed to,
+        address indexed token,
+        uint256 amount
+    );
 
-    event RaffleCreated(uint256 indexed id, string name, address indexed token, uint64 endTime, uint32 winnersCount, uint32 maxParticipants, uint256 totalPrize, bool requireCommunityMembership);
-    event RaffleLocked(uint256 indexed id, address indexed token, uint256 amount, uint64 endTime);
+    event RaffleCreated(
+        uint256 indexed id,
+        string name,
+        address indexed token,
+        uint64 endTime,
+        uint32 winnersCount,
+        uint32 maxParticipants,
+        uint256 totalPrize,
+        bool requireCommunityMembership
+    );
+    event RaffleLocked(
+        uint256 indexed id,
+        address indexed token,
+        uint256 amount,
+        uint64 endTime
+    );
     event RegisteredForRaffle(uint256 indexed id, address indexed user);
-    event WinnersDrawn(uint256 indexed id, bytes32 indexed seed, address[] winners, uint256[] amounts);
+    event WinnersDrawn(
+        uint256 indexed id,
+        bytes32 indexed seed,
+        address[] winners,
+        uint256[] amounts
+    );
     event RaffleCancelled(uint256 indexed id);
 
     error OnlyAdmin();
@@ -185,7 +218,16 @@ contract Community {
         r.requireCommunityMembership = requireMembership;
 
         _raffleIds.push(id);
-        emit RaffleCreated(id, name, token, endTime, winnersCount, maxParticipants, totalPrize, requireMembership);
+        emit RaffleCreated(
+            id,
+            name,
+            token,
+            endTime,
+            winnersCount,
+            maxParticipants,
+            totalPrize,
+            requireMembership
+        );
 
         // Save to factory for global view
         IRaffylFactory(factory).onRaffleCreated(id);
@@ -219,9 +261,12 @@ contract Community {
         Raffle storage r = _raffles[id];
         if (r.status != RaffleStatus.Active) revert NotActive();
         if (block.timestamp >= r.endTime) revert RaffleEnded();
-        
+
         for (uint i = 0; i < users.length; i++) {
-            if (r.maxParticipants > 0 && r.participants.length >= r.maxParticipants) revert RaffleEnded();
+            if (
+                r.maxParticipants > 0 &&
+                r.participants.length >= r.maxParticipants
+            ) revert RaffleEnded();
             address user = users[i];
             if (r.isParticipant[user]) revert AlreadyJoined();
             if (r.requireCommunityMembership) {
@@ -237,23 +282,38 @@ contract Community {
     function drawWinners(uint256 id) external onlyAdmin {
         Raffle storage r = _raffles[id];
         if (r.status != RaffleStatus.Active) revert NotActive();
-        if (block.timestamp < r.endTime && (r.maxParticipants == 0 || r.participants.length < r.maxParticipants)) revert NotEnded();
+        bool timeEnded = block.timestamp >= r.endTime;
+        bool maxReached = r.maxParticipants > 0 &&
+            r.participants.length >= r.maxParticipants;
+
+        if (!timeEnded && !maxReached) revert NotEnded();
 
         uint256 n = r.participants.length;
         uint32 k = r.winnersCount;
         if (n < k) k = uint32(n);
 
         bytes32 seed = keccak256(
-            abi.encodePacked(blockhash(block.number - 1), address(this), id, n, r.endTime)
+            abi.encodePacked(
+                blockhash(block.number - 1),
+                address(this),
+                id,
+                n,
+                r.endTime
+            )
         );
 
         address[] memory pool = new address[](n);
-        for (uint256 i = 0; i < n; i++) { pool[i] = r.participants[i]; }
+        for (uint256 i = 0; i < n; i++) {
+            pool[i] = r.participants[i];
+        }
 
         address[] memory sel = RaffleHelpers._selectWinners(pool, k, seed);
         r.winners = sel;
 
-        uint256[] memory amounts = RaffleHelpers._equalShares(r.totalPrize, sel.length);
+        uint256[] memory amounts = RaffleHelpers._equalShares(
+            r.totalPrize,
+            sel.length
+        );
         r.winnerAmounts = amounts;
 
         for (uint256 i = 0; i < sel.length; i++) {
@@ -289,21 +349,29 @@ contract Community {
         return _raffleIds;
     }
 
-    function getRaffleCore(uint256 id) external view returns (
-        address token,
-        uint64 endTime,
-        uint32 winnersCount,
-        uint8 status,
-        uint256 totalPrize,
-        bool requireCommunityMembership,
-        uint256 participantsCount
-    ) {
+    function getRaffleCore(
+        uint256 id
+    )
+        external
+        view
+        returns (
+            address token,
+            uint64 endTime,
+            uint32 winnersCount,
+            uint32 maxParticipants,
+            uint8 status,
+            uint256 totalPrize,
+            bool requireCommunityMembership,
+            uint256 participantsCount
+        )
+    {
         Raffle storage r = _raffles[id];
         if (r.endTime == 0) revert InvalidRaffleID();
         return (
             r.token,
             r.endTime,
             r.winnersCount,
+            r.maxParticipants,
             uint8(r.status),
             r.totalPrize,
             r.requireCommunityMembership,
@@ -311,7 +379,13 @@ contract Community {
         );
     }
 
-    function getWinners(uint256 id) external view returns (address[] memory winners, uint256[] memory amounts) {
+    function getWinners(
+        uint256 id
+    )
+        external
+        view
+        returns (address[] memory winners, uint256[] memory amounts)
+    {
         Raffle storage r = _raffles[id];
         if (r.endTime == 0) revert InvalidRaffleID();
         uint256 n = r.winners.length;
@@ -321,7 +395,6 @@ contract Community {
             winners[i] = r.winners[i];
             amounts[i] = r.winnerAmounts[i];
         }
-
     }
 
     // View: token for raffle ID (used by Factory orchestrator)

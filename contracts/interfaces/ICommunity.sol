@@ -17,6 +17,7 @@ interface ICommunity {
         address token,
         uint64 endTime,
         uint32 winnersCount,
+        uint32 maxParticipants,
         uint8 status,
         uint256 totalPrize,
         bool requireCommunityMembership,

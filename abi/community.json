@@ -569,6 +569,11 @@
 				"type": "uint32"
 			},
 			{
+				"internalType": "uint32",
+				"name": "maxParticipants",
+				"type": "uint32"
+			},
+			{
 				"internalType": "uint8",
 				"name": "status",
 				"type": "uint8"
