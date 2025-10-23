@@ -7,7 +7,6 @@ import {
   IconCurrencyDollar,
   IconSettings,
   IconPlus,
-  IconCalendar,
   IconLayoutDashboard,
 } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
@@ -22,7 +21,7 @@ import {
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 
-export type TabValue = 'dashboard' | 'raffles' | 'participants' | 'funds' | 'meetings';
+export type TabValue = 'dashboard' | 'raffles' | 'participants' | 'funds' | 'settings';
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   organizationName: string;

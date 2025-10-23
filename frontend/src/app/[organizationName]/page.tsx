@@ -4,7 +4,7 @@ import { useState } from "react";
 import { AppSidebar } from "@/components/organizationDashboard/app-sidebar";
 import { SiteHeader } from "@/components/organizationDashboard/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs } from "@/components/ui/tabs";
 import { DashboardTab } from "@/components/organizationDashboard/tabs/DashboardTab";
 import { RafflesTab } from "@/components/organizationDashboard/tabs/RafflesTab";
 import { ParticipantsTab } from "@/components/organizationDashboard/tabs/ParticipantsTab";
