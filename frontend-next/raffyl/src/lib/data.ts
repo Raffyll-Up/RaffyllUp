@@ -1,0 +1,42 @@
+export const rafflesData = [
+    {
+      id: '1',
+      name: 'Tech Raffle 2024',
+      status: 'Active',
+      prizePool: '$10,000',
+      startDate: '2024-03-15',
+      endDate: '2024-04-15',
+    },
+    {
+      id: '2',
+      name: 'Summer Giveaway',
+      status: 'Completed',
+      prizePool: '$5,000',
+      startDate: '2023-06-01',
+      endDate: '2023-07-01',
+    },
+    {
+      id: '3',
+      name: 'Holiday Raffle',
+      status: 'Completed',
+      prizePool: '$7,500',
+      startDate: '2023-12-01',
+      endDate: '2024-01-01',
+    },
+    {
+      id: '4',
+      name: 'Spring Fling',
+      status: 'Locked',
+      prizePool: '$2,500',
+      startDate: '2024-05-01',
+      endDate: '2024-06-01',
+    },
+    {
+      id: '5',
+      name: 'Autumn Extravaganza',
+      status: 'Active',
+      prizePool: '$15,000',
+      startDate: '2024-09-01',
+      endDate: '2024-10-01',
+    },
+  ];
