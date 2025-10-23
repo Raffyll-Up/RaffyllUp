@@ -35,7 +35,7 @@ const MetricCard = ({ title, value, change, changeType = 'neutral', icon }: Metr
 
 export function DashboardTab() {
   const activeRaffles = rafflesData.filter(r => r.status === 'Active').length;
-  const completedRaffles = rafflesData.filter(r => r.status === 'Completed').length;
+  const completedRaffles = rafflesData.filter(r => r.status === 'PaidOut').length;
   const totalParticipants = 1500;
   const totalFunds = rafflesData.reduce((sum, raffle) => {
     const amount = parseFloat(raffle.prizePool.replace(/[^0-9.]/g, ''));
@@ -127,7 +127,7 @@ export function DashboardTab() {
                       <Badge
                         variant={raffle.status === 'Active' ? 'default' : 'secondary'}
                         className={`${raffle.status === 'Active' ? 'bg-green-500/20 text-green-400' :
-                          raffle.status === 'Completed' ? 'bg-gray-500/20 text-gray-400' :
+                          raffle.status === 'PaidOut' ? 'bg-gray-500/20 text-gray-400' :
                           'bg-yellow-500/20 text-yellow-400'}`}
                       >
                         {raffle.status}
@@ -141,7 +141,7 @@ export function DashboardTab() {
                       <div className="text-sm text-gray-300">{raffle.startDate} to {raffle.endDate}</div>
                       <div className="text-xs text-gray-500">
                         {raffle.status === 'Active' ? 'Ends in 15 days' : 
-                         raffle.status === 'Completed' ? 'Completed' : 'Starts soon'}
+                         raffle.status === 'PaidOut' ? 'Completed' : 'Starts soon'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
