@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, Filter, MoreHorizontal, Users } from "lucide-react";
-import { rafflesData } from "@/lib/data";
+import { communityData } from "@/lib/communityData";
 import { CreateRaffleModal } from "@/components/raffles/CreateRaffleModal";
 import { RaffleDetailsModal } from "@/components/raffles/RaffleDetailsModal";
 
@@ -24,9 +24,9 @@ export function RafflesTab() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   // const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const filteredRaffles = rafflesData.filter(raffle => {
-    const matchesSearch = raffle.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || raffle.status === statusFilter;
+  const filteredRaffles = communityData.filter(community => {
+    const matchesSearch = community.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || community.raffles[0].status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -105,29 +105,29 @@ export function RafflesTab() {
             </TableHeader>
             <TableBody>
               {filteredRaffles.length > 0 ? (
-                filteredRaffles.map((raffle) => (
+                filteredRaffles.map((community) => (
                   <TableRow 
-                    key={raffle.id} 
+                    key={community.name} 
                     className="border-gray-800 hover:bg-gray-800/30 cursor-pointer"
                   >
-                    <TableCell className="font-medium text-white">{raffle.name}</TableCell>
+                    <TableCell className="font-medium text-white">{community.name}</TableCell>
                     <TableCell>
                       <Badge 
                         variant="outline" 
                         className={cn(
                           'border-none text-xs',
-                          statusVariant[raffle.status as keyof typeof statusVariant]
+                          statusVariant[community.raffles[0].status as keyof typeof statusVariant]
                         )}
                       >
-                        {raffle.status}
+                        {community.raffles[0].status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-white">{raffle.prizePool}</TableCell>
-                    <TableCell className="text-gray-400">{raffle.endDate}</TableCell>
+                    <TableCell className="text-white">{community.raffles[0].prizePool}</TableCell>
+                    <TableCell className="text-gray-400">{community.raffles[0].endDate}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2 text-gray-400">
                         <Users className="h-4 w-4" />
-                        <span>{raffle.participants.length} / {raffle.maxParticipants}</span>
+                        <span>{community.raffles[0].participants.length} / {community.raffles[0].maxParticipants}</span>
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
@@ -137,7 +137,7 @@ export function RafflesTab() {
                         className="text-gray-400 hover:text-white"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleRaffleClick(raffle);
+                          handleRaffleClick(community);
                         }}
                       >
                         <MoreHorizontal className="h-4 w-4" />

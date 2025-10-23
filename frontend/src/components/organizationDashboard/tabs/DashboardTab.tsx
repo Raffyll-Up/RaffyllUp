@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { rafflesData } from "@/lib/data";
+import { communityData } from "@/lib/communityData";
 
 type MetricCardProps = {
   title: string;
@@ -34,11 +34,11 @@ const MetricCard = ({ title, value, change, changeType = 'neutral', icon }: Metr
 );
 
 export function DashboardTab() {
-  const activeRaffles = rafflesData.filter(r => r.status === 'Active').length;
-  const completedRaffles = rafflesData.filter(r => r.status === 'PaidOut').length;
+  const activeRaffles = communityData.filter(r => r.raffles[0].status === 'Active').length;
+  const completedRaffles = communityData.filter(r => r.raffles[0].status === 'PaidOut').length;
   const totalParticipants = 1500;
-  const totalFunds = rafflesData.reduce((sum, raffle) => {
-    const amount = parseFloat(raffle.prizePool.replace(/[^0-9.]/g, ''));
+  const totalFunds = communityData.reduce((sum, community) => {
+    const amount = parseFloat(community.raffles[0].prizePool.replace(/[^0-9.]/g, ''));
     return sum + amount;
   }, 0);
 
@@ -49,7 +49,7 @@ export function DashboardTab() {
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row items-center md:space-x-6 space-y-4 md:space-y-0">
             <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
-              {rafflesData[0].name[0]}
+              {communityData[0].name[0]}
             </div>
             <div className="text-center md:text-left">
               <h2 className="text-xl font-semibold">Tech Innovators Inc.</h2>
@@ -88,7 +88,7 @@ export function DashboardTab() {
           />
           <MetricCard 
             title="Completion Rate" 
-            value={`${Math.round((completedRaffles / rafflesData.length) * 100)}%`}
+            value={`${Math.round((completedRaffles / communityData.length) * 100)}%`}
             change="+5% from last quarter"
             changeType="increase"
           />
@@ -117,31 +117,31 @@ export function DashboardTab() {
                 </tr>
               </thead>
               <tbody className="bg-gray-900/50 divide-y divide-gray-800">
-                {rafflesData.map((raffle) => (
-                  <tr key={raffle.id} className="hover:bg-gray-800/50 transition-colors">
+                {communityData.map((community) => (
+                  <tr key={community.name} className="hover:bg-gray-800/50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-white">{raffle.name}</div>
-                      <div className="text-xs text-gray-400">ID: {raffle.id}</div>
+                      <div className="font-medium text-white">{community.name}</div>
+                      <div className="text-xs text-gray-400">ID: {community.name}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Badge
-                        variant={raffle.status === 'Active' ? 'default' : 'secondary'}
-                        className={`${raffle.status === 'Active' ? 'bg-green-500/20 text-green-400' :
-                          raffle.status === 'PaidOut' ? 'bg-gray-500/20 text-gray-400' :
+                        variant={community.raffles[0].status === 'Active' ? 'default' : 'secondary'}
+                        className={`${community.raffles[0].status === 'Active' ? 'bg-green-500/20 text-green-400' :
+                          community.raffles[0].status === 'PaidOut' ? 'bg-gray-500/20 text-gray-400' :
                           'bg-yellow-500/20 text-yellow-400'}`}
                       >
-                        {raffle.status}
+                        {community.raffles[0].status}
                       </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-300">
-                      <div className="font-medium">{raffle.prizePool}</div>
+                      <div className="font-medium">{community.raffles[0].prizePool}</div>
                       <div className="text-xs text-gray-500">Total prize</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-300">{raffle.startDate} to {raffle.endDate}</div>
+                      <div className="text-sm text-gray-300">{community.raffles[0].startDate} to {community.raffles[0].endDate}</div>
                       <div className="text-xs text-gray-500">
-                        {raffle.status === 'Active' ? 'Ends in 15 days' : 
-                         raffle.status === 'PaidOut' ? 'Completed' : 'Starts soon'}
+                        {community.raffles[0].status === 'Active' ? 'Ends in 15 days' : 
+                         community.raffles[0].status === 'PaidOut' ? 'Completed' : 'Starts soon'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
