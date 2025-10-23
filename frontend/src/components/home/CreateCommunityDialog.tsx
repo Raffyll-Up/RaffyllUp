@@ -69,7 +69,7 @@ export function CreateCommunityDialog() {
               variant="outline"
               onClick={() => setOpen(false)}
               disabled={isLoading}
-              className="border-gray-700 text-gray-300 hover:bg-gray-800"
+              className="border-gray-700 text-gray-600 hover:text-gray-300 hover:bg-gray-800"
             >
               Cancel
             </Button>

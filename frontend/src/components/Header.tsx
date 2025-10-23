@@ -37,6 +37,7 @@ export function Header() {
   }, [isMenuOpen]);
 
   const navLinks = [
+    { href: "/home", label: "Home"},
     { href: "/dashboard", label: "Dashboard" },
     { href: "/", label: "Explore" },
     { href: "/create-raffle", label: "Documentation" },

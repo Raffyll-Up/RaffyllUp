@@ -8,7 +8,7 @@ export function Hero() {
   
     // 60 seconds countdown
     const { formattedTime } = useCountdown(60, () => {
-      router.push('/dashboard');
+      router.push('/home');
     });
 
     

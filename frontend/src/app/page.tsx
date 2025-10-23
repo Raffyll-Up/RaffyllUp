@@ -16,7 +16,7 @@ export default function Home() {
   // Redirect to dashboard if wallet is connected
   useEffect(() => {
     if (isConnected) {
-      router.push('/dashboard');
+      router.push('/home');
     }
   }, [isConnected, router]);
 
