@@ -6,10 +6,8 @@ import {
   IconUsers,
   IconCurrencyDollar,
   IconSettings,
-  IconPlus,
   IconLayoutDashboard,
 } from "@tabler/icons-react"
-import { Button } from "@/components/ui/button"
 import {
   Sidebar,
   SidebarContent,
@@ -20,6 +18,7 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
+import { CreateRaffleModal } from "../raffles/CreateRaffleModal"
 
 export type TabValue = 'dashboard' | 'raffles' | 'participants' | 'funds' | 'settings';
 
@@ -97,14 +96,7 @@ export function AppSidebar({ organizationName, activeTab, onTabChange, ...props 
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-gray-800">
-        <Button 
-          className="w-full bg-blue-600 hover:bg-blue-700" 
-          size="sm"
-          onClick={() => onTabChange('raffles')}
-        >
-          <IconPlus className="mr-2 h-4 w-4" />
-          Create Raffle
-        </Button>
+        <CreateRaffleModal />
       </SidebarFooter>
     </Sidebar>
   )
