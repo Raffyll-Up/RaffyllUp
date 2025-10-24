@@ -7,7 +7,8 @@ import { Award } from "lucide-react";
 import { format, parseISO } from 'date-fns';
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Raffle } from "@/lib/data";
+// import { communityData } from "@/lib/communityData";
+import { RaffleStatus } from "@/lib/communityData";
 
 const statusVariant = {
   Upcoming: 'bg-yellow-500/20 text-yellow-400',
@@ -18,7 +19,21 @@ const statusVariant = {
 } as const;
 
 type RaffleDetailsModalProps = {
-  raffle: Raffle;
+  raffle: {
+    id: number;
+    name: string;
+    token: string;
+    endTime: string;
+    winnersCount: number;
+    maxParticipants: number;
+    status: RaffleStatus;
+    totalPrize: string;
+    requireCommunityMembership: boolean;
+    participants: string[];
+    winners: string[];
+    winnerAmounts: string[];
+    startDate: string;
+  };
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onJoinRaffle?: (raffleId: string) => Promise<void>;
@@ -29,7 +44,7 @@ export function RaffleDetailsModal({ raffle, open, onOpenChange, onJoinRaffle }:
   // const [ticketCount, setTicketCount] = useState(1);
   
   const startDate = parseISO(raffle.startDate);
-  const endDate = parseISO(raffle.endDate);
+  const endDate = parseISO(raffle.endTime);
   const now = new Date();
   const isActive = raffle.status === 'Active';
   // const isCompleted = ['Drawn', 'PaidOut'].includes(raffle.status);
@@ -44,7 +59,7 @@ export function RaffleDetailsModal({ raffle, open, onOpenChange, onJoinRaffle }:
     
     try {
       setIsLoading(true);
-      await onJoinRaffle(raffle.id);
+      await onJoinRaffle(raffle.id.toString());
     } finally {
       setIsLoading(false);
     }
@@ -62,7 +77,7 @@ export function RaffleDetailsModal({ raffle, open, onOpenChange, onJoinRaffle }:
                   variant="outline" 
                   className={cn(
                     'border-none text-xs',
-                    statusVariant[raffle.status]
+                    statusVariant[raffle.status as keyof typeof statusVariant]
                   )}
                 >
                   {raffle.status}
@@ -75,7 +90,7 @@ export function RaffleDetailsModal({ raffle, open, onOpenChange, onJoinRaffle }:
               </div>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold text-white">{raffle.prizePool}</div>
+              <div className="text-2xl font-bold text-white">{raffle.totalPrize}</div>
               <div className="text-sm text-gray-400">Total Prize</div>
             </div>
           </div>

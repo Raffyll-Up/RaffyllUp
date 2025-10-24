@@ -155,7 +155,7 @@ export const communityData: Community[] = [
     ],
   },
   {
-    name: "Tech Innovators Inc",
+    name: "Tech Inc",
     created: "2024-07-15",
     owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF565Dd",
     raffles: [
@@ -179,13 +179,13 @@ export const communityData: Community[] = [
     ],
   },
   {
-    name: "Tech Raffle 2024",
-    created: "2024-03-15",
+    name: "Tech Raffle ",
+    created: "2025-10-15",
     owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF565Dd",
     raffles: [
       {
         id: 8,
-        name: "Tech Raffle 2024",
+        name: "Tech Raffle",
         token: "",
         endTime: 0,
         winnersCount: 0,
@@ -203,13 +203,13 @@ export const communityData: Community[] = [
     ],
   },
   {
-    name: "EcoSolution Collective",
+    name: "EcoSolution dsdol Collective",
     created: "2024-04-15",
     owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF565Dd",
     raffles: [
       {
         id: 9,
-        name: "Tech Raffle 2024",
+        name: "Raffle 2024",
         token: "",
         endTime: 0,
         winnersCount: 0,

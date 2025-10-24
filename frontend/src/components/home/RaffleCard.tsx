@@ -30,7 +30,7 @@ export function RaffleCard({ raffle, communityName, communityOwner }: RaffleCard
       const date = new Date(dateString);
       return isNaN(date.getTime()) ? 'Invalid date' : format(date, 'MM/dd/yyyy');
     } catch (e) {
-      return 'Invalid date';
+      return `Invalid date ${dateString} || ${e}`;
     }
   };
   
