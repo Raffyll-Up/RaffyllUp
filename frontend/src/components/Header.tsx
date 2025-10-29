@@ -38,7 +38,6 @@ export function Header() {
 
   const navLinks = [
     { href: "/home", label: "Home"},
-    { href: "/", label: "Explore" },
     { href: "/communities", label: "Communities"},
     { href: "/raffles", label: "Raffles"},
     { href: "/about", label: "About Us" },

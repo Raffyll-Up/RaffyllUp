@@ -22,6 +22,7 @@ interface OrganizationPageProps {
 
 export default function OrganizationPage({ params }: OrganizationPageProps) {
   const [activeTab, setActiveTab] = useState<TabValue>('dashboard');
+  // const [currentCommunity, setCurrentCommunity] = useState<Community | null>(null);
 
   useEffect(() => {
     const community = communityData.find((org) => org.name === params.dashboardPage);

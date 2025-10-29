@@ -59,7 +59,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {gettingStartedSteps.map((step, index) => (
               <Card key={index} className="bg-dark-secondary/30 backdrop-blur-sm border-dark-border">
-                <CardContent className="p-6">
+                <CardContent className="px-6">
                   <div className="h-10 w-10 rounded-full bg-teal-900/30 flex items-center justify-center mb-4">
                     {step.icon}
                   </div>

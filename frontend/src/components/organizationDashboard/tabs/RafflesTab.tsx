@@ -5,16 +5,18 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Filter, MoreHorizontal, Users } from "lucide-react";
+import { Search, Filter, MoreHorizontal, Users, Award } from "lucide-react";
 import { communityData } from "@/lib/communityData";
 import { CreateRaffleModal } from "@/components/raffles/CreateRaffleModal";
 import { RaffleDetailsModal } from "@/components/raffles/RaffleDetailsModal";
+import { useParams } from "next/navigation";
 
 const statusVariant = {
   Active: 'bg-green-500/20 text-green-400',
   Upcoming: 'bg-blue-500/20 text-blue-400',
-  Completed: 'bg-gray-500/20 text-gray-400',
-  Draft: 'bg-yellow-500/20 text-yellow-400'
+  PaidOut: 'bg-gray-500/20 text-gray-400',
+  Drawn: 'bg-yellow-500/20 text-yellow-400',
+  Cancelled: 'bg-red-500/20 text-red-400'
 } as const;
 
 export function RafflesTab() {
@@ -22,13 +24,28 @@ export function RafflesTab() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedRaffle, setSelectedRaffle] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  // const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const filteredRaffles = communityData.filter(community => {
-    const matchesSearch = community.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || community.raffles[0].status === statusFilter;
+  // Get the community name from the URL
+  const params = useParams();
+  const communityName = params?.dashboardPage as string;
+
+  console.log("communityName: ", communityName);
+
+  // Find the current community and its raffles
+  const currentCommunity = communityData.find(
+    community => community.name?.toLowerCase() === communityName?.toLowerCase()
+  );
+
+  console.log("currentCommunity: ", currentCommunity);
+
+  // Flatten and filter the raffles for the current community
+  const filteredRaffles = currentCommunity?.raffles.filter(raffle => {
+    const matchesSearch = raffle.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || raffle.status === statusFilter;
     return matchesSearch && matchesStatus;
-  });
+  }) || [];
+
+  console.log("filteredRaffles: ", filteredRaffles);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleRaffleClick = (raffle: any) => {
@@ -98,46 +115,56 @@ export function RafflesTab() {
                 <TableHead className="w-[300px]">Raffle</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Prize Pool</TableHead>
+                <TableHead>End Date</TableHead>
                 <TableHead>Participants</TableHead>
-                <TableHead>Duration</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredRaffles.length > 0 ? (
-                filteredRaffles.map((community) => (
+                filteredRaffles.map((raffle) => (
                   <TableRow 
-                    key={community.name} 
+                    key={raffle.id} 
                     className="border-gray-800 hover:bg-gray-800/30 cursor-pointer"
+                    onClick={() => handleRaffleClick({ ...raffle, communityName: currentCommunity?.name })}
                   >
-                    <TableCell className="font-medium text-white">{community.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-md bg-gray-800 flex items-center justify-center">
+                          <Award className="h-5 w-5 text-teal-400" />
+                        </div>
+                        <div>
+                          <div className="text-white">{raffle.name}</div>
+                          <div className="text-xs text-gray-400">{currentCommunity?.name}</div>
+                        </div>
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <Badge 
-                        variant="outline" 
                         className={cn(
-                          'border-none text-xs',
-                          statusVariant[community.raffles[0].status as keyof typeof statusVariant]
+                          'whitespace-nowrap',
+                          statusVariant[raffle.status as keyof typeof statusVariant] || 'bg-gray-500/20 text-gray-400'
                         )}
                       >
-                        {community.raffles[0].status}
+                        {raffle.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-white">{community.raffles[0].prizePool}</TableCell>
-                    <TableCell className="text-gray-400">{community.raffles[0].endDate}</TableCell>
+                    <TableCell className="text-white">{raffle.prizePool}</TableCell>
+                    <TableCell className="text-gray-400">{raffle.endDate}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2 text-gray-400">
                         <Users className="h-4 w-4" />
-                        <span>{community.raffles[0].participants.length} / {community.raffles[0].maxParticipants}</span>
+                        <span>{raffle.participants.length} / {raffle.maxParticipants}</span>
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="text-gray-400 hover:text-white"
+                        className="text-gray-400 hover:text-white hover:bg-gray-800"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleRaffleClick(community);
+                          handleRaffleClick({ ...raffle, communityName: currentCommunity?.name });
                         }}
                       >
                         <MoreHorizontal className="h-4 w-4" />
@@ -146,9 +173,11 @@ export function RafflesTab() {
                   </TableRow>
                 ))
               ) : (
-                <TableRow className="border-gray-800 hover:bg-transparent">
+                <TableRow>
                   <TableCell colSpan={6} className="h-24 text-center text-gray-400">
-                    No raffles found matching your criteria.
+                    {statusFilter === 'all' 
+                      ? 'No raffles found' 
+                      : `No ${statusFilter.toLowerCase()} raffles found`}
                   </TableCell>
                 </TableRow>
               )}
