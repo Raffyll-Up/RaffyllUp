@@ -38,10 +38,9 @@ export function Header() {
 
   const navLinks = [
     { href: "/home", label: "Home"},
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/", label: "Explore" },
-    { href: "/create-raffle", label: "Documentation" },
-    { href: "/my-raffles", label: "About Us" },
+    { href: "/communities", label: "Communities"},
+    { href: "/raffles", label: "Raffles"},
+    { href: "/about", label: "About Us" },
   ];
 
   return (

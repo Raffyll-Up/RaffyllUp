@@ -27,7 +27,7 @@ export const communityData: Community[] = [
   {
     name: "Tech Raffle 2024",
     created: "2024-03-15",
-    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF565Dd",
+    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF51111",
     raffles: [
       {
         id: 1,
@@ -68,7 +68,7 @@ export const communityData: Community[] = [
   {
     name: "EcoSolution Collective",
     created: "2024-04-15",
-    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF565Dd",
+    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF52222",
     raffles: [
       {
         id: 3,
@@ -109,7 +109,7 @@ export const communityData: Community[] = [
   {
     name: "Creative Minds Studio",
     created: "2024-05-15",
-    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF565Dd",
+    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF53333",
     raffles: [
       {
         id: 5,
@@ -133,7 +133,7 @@ export const communityData: Community[] = [
   {
     name: "Global health Initiative",
     created: "2024-06-15",
-    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF565Dd",
+    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF54444",
     raffles: [
       {
         id: 6,
@@ -157,7 +157,7 @@ export const communityData: Community[] = [
   {
     name: "Tech Inc",
     created: "2024-07-15",
-    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF565Dd",
+    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF55555",
     raffles: [
       {
         id: 7,
@@ -181,7 +181,7 @@ export const communityData: Community[] = [
   {
     name: "Tech Raffle ",
     created: "2025-10-15",
-    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF565Dd",
+    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF56666",
     raffles: [
       {
         id: 8,
@@ -205,7 +205,7 @@ export const communityData: Community[] = [
   {
     name: "EcoSolution dsdol Collective",
     created: "2024-04-15",
-    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF565Dd",
+    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF57777",
     raffles: [
       {
         id: 9,
@@ -229,7 +229,7 @@ export const communityData: Community[] = [
   {
     name: "Creative Minds Studio",
     created: "2024-05-15",
-    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF565Dd",
+    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF58888",
     raffles: [
       {
         id: 10,
@@ -253,7 +253,7 @@ export const communityData: Community[] = [
   {
     name: "Global health Initiative",
     created: "2024-06-15",
-    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF565Dd",
+    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF59999",
     raffles: [
       {
         id: 11,
@@ -277,7 +277,7 @@ export const communityData: Community[] = [
   {
     name: "Tech Innovators Inc",
     created: "2024-07-15",
-    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF565Dd",
+    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF50011",
     raffles: [
       {
         id: 12,
@@ -301,7 +301,7 @@ export const communityData: Community[] = [
   {
     name: "EcoSolution Collective",
     created: "2024-04-15",
-    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF565Dd",
+    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF50022",
     raffles: [
       {
         id: 13,
@@ -325,7 +325,7 @@ export const communityData: Community[] = [
   {
     name: "Creative Minds Studio",
     created: "2024-05-15",
-    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF565Dd",
+    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF50033",
     raffles: [
       {
         id: 14,
@@ -349,7 +349,7 @@ export const communityData: Community[] = [
   {
     name: "Global health Initiative",
     created: "2024-06-15",
-    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF565Dd",
+    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF50044",
     raffles: [
       {
         id: 15,
@@ -373,7 +373,7 @@ export const communityData: Community[] = [
   {
     name: "Tech Innovators Inc",
     created: "2024-07-15",
-    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF565Dd",
+    owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF50055",
     raffles: [
       {
         id: 16,

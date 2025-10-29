@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppSidebar } from "@/components/organizationDashboard/app-sidebar";
 import { SiteHeader } from "@/components/organizationDashboard/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -10,15 +10,28 @@ import { RafflesTab } from "@/components/organizationDashboard/tabs/RafflesTab";
 import { ParticipantsTab } from "@/components/organizationDashboard/tabs/ParticipantsTab";
 import { FundsTab } from "@/components/organizationDashboard/tabs/FundsTab";
 import { SettingsTab } from "@/components/organizationDashboard/tabs/SettingsTab";
+import { communityData } from "@/lib/communityData";
 
 type TabValue = 'dashboard' | 'raffles' | 'participants' | 'funds' | 'settings';
 
-export default function OrganizationPage({
-  params,
-}: {
-  params: { organizationName: string };
-}) {
+interface OrganizationPageProps {
+  params: {
+    dashboardPage: string;
+  };
+}
+
+export default function OrganizationPage({ params }: OrganizationPageProps) {
   const [activeTab, setActiveTab] = useState<TabValue>('dashboard');
+  // const [currentCommunity, setCurrentCommunity] = useState<Community | null>(null);
+
+  useEffect(() => {
+    const community = communityData.find((org) => org.name === params.dashboardPage);
+    if (community) {
+      setActiveTab('dashboard');
+    } else {
+      console.log(`Community with name ${params.dashboardPage} not found`);
+    }
+  }, [params.dashboardPage]);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -48,7 +61,7 @@ export default function OrganizationPage({
       >
         <AppSidebar 
           variant="inset" 
-          organizationName={params.organizationName}
+          organizationName={params.dashboardPage}
           activeTab={activeTab}
           onTabChange={setActiveTab}
         />
