@@ -1,232 +1,271 @@
-import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useMemo, useState } from "react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Plus, Copy, ExternalLink, Filter, MoreHorizontal, BarChart2, Ticket, Wallet } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-// import { formatEther } from "viem";
+import { Search, Copy, ExternalLink, Filter, BarChart2, Ticket, Wallet } from "lucide-react";
+// Define a local Community type for this tab
+type Community = {
+  raffles: Array<{
+    id: string | number;
+    participants: string[]; // array of wallet addresses
+  }>;
+};
 
-// Mock data for Web3 participants
-const participantsData = [
-  {
-    walletAddress: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
-    tickets: 5,
-    totalSpent: "0.1", // in ETH
-    lastActivity: "2 hours ago",
-    status: "active",
-    joinDate: "2023-10-15",
-    txCount: 3
-  },
-  {
-    walletAddress: "0x1234567890123456789012345678901234567890",
-    tickets: 3,
-    totalSpent: "0.06",
-    lastActivity: "1 day ago",
-    status: "active",
-    joinDate: "2023-10-10",
-    txCount: 1
-  },
-  // ... more participants
-];
+interface ParticipantsTabProps {
+  community: Community;
+}
 
-export function ParticipantsTab() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+type ParticipantStatus = 'all' | 'active' | 'inactive';
 
-  const filteredParticipants = participantsData.filter(participant => {
-    const matchesSearch = 
-      participant.walletAddress.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || participant.status === statusFilter;
-    return matchesSearch && matchesStatus;
+export function ParticipantsTab({ community }: ParticipantsTabProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<ParticipantStatus>('all');
+  const [sortBy, setSortBy] = useState<{ field: 'wallet' | 'tickets' | 'lastActivity'; direction: 'asc' | 'desc' }>({
+    field: 'lastActivity',
+    direction: 'desc'
   });
 
-  const formatAddress = (address: string) => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  // Aggregate all unique wallet addresses from all raffles
+  const participants = useMemo(() => {
+    const participantMap = new Map<string, {
+      walletAddress: string;
+      tickets: number;
+      lastActivity: string;
+      joinDate: string;
+      status: ParticipantStatus;
+      txCount: number;
+    }>();
+
+    community.raffles.forEach(raffle => {
+      raffle.participants.forEach(walletAddress => {
+        if (!participantMap.has(walletAddress)) {
+          participantMap.set(walletAddress, {
+            walletAddress,
+            tickets: 1,
+            lastActivity: new Date().toISOString(), // fallback to now
+            joinDate: new Date().toISOString(), // fallback to now
+            status: 'active',
+            txCount: 1
+          });
+        } else {
+          const existing = participantMap.get(walletAddress)!;
+          existing.tickets += 1;
+          existing.txCount += 1;
+          // Optionally update lastActivity/joinDate if you have timestamps
+        }
+      });
+    });
+
+    return Array.from(participantMap.values());
+  }, [community.raffles]);
+
+  const filteredParticipants = useMemo(() => {
+    return participants.filter(participant => {
+      const matchesSearch = participant.walletAddress.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === 'all' ||
+        (statusFilter === 'active' && participant.status === 'active') ||
+        (statusFilter === 'inactive' && participant.status !== 'active');
+
+      return matchesSearch && matchesStatus;
+    }).sort((a, b) => {
+      if (sortBy.field === 'wallet') {
+        return sortBy.direction === 'asc'
+          ? a.walletAddress.localeCompare(b.walletAddress)
+          : b.walletAddress.localeCompare(a.walletAddress);
+      } else if (sortBy.field === 'tickets') {
+        return sortBy.direction === 'asc'
+          ? a.tickets - b.tickets
+          : b.tickets - a.tickets;
+      } else { // lastActivity
+        return sortBy.direction === 'asc'
+          ? new Date(a.lastActivity).getTime() - new Date(b.lastActivity).getTime()
+          : new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime();
+      }
+    });
+  }, [participants, searchQuery, statusFilter, sortBy]);
+
+  const handleSort = (field: 'wallet' | 'tickets' | 'lastActivity') => {
+    setSortBy(prev => ({
+      field,
+      direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const formatTimeAgo = (dateString: string) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diffInSeconds < 60) return 'just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    return `${Math.floor(diffInSeconds / 86400)}d ago`;
   };
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold">Participants</h2>
+          <p className="text-sm text-gray-400">Manage and track participant activity</p>
+        </div>
+      </div>
 
-      {/* Filters */}
-      <Card className="bg-gray-900/40 border-gray-800">
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
+      <Card className="bg-gray-900 border-gray-800">
+        <CardHeader className="pb-2">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="relative w-full md:w-80">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                type="text"
-                placeholder="Search by wallet or ENS..."
-                className="pl-10 bg-gray-900 border-gray-800 font-mono"
+                placeholder="Search by wallet address..."
+                className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className="flex gap-2">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px] bg-gray-900 border-gray-800">
-                  <Filter className="h-4 w-4 text-gray-400 mr-2" />
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-900 border-gray-800">
-                  <SelectItem value="all">All Wallets</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-gray-400" />
+              <select
+                className="bg-gray-800 border border-gray-700 text-white text-sm rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as ParticipantStatus)}
+              >
+                <option value="all">All Participants</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+              <div className="flex items-center gap-3">
+                <Button variant="outline" className="border-gray-700">
+                  <BarChart2 className="w-4 h-4 mr-2" />
+                  Export Data
+                </Button>
+              </div>
             </div>
-            <Button className="bg-blue-600 hover:bg-blue-700 gap-2">
-              <Plus className="h-4 w-4" />
-              Add Wallet
-            </Button>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Participants Table */}
-      <Card className="bg-gray-900/40 border-gray-800 overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader className="bg-gray-800/50">
-              <TableRow className="border-gray-800">
-                <TableHead>Wallet Address</TableHead>
-                <TableHead>Tickets</TableHead>
-                <TableHead className="text-right">Total Spent</TableHead>
-                <TableHead className="text-right">Transactions</TableHead>
-                <TableHead>Last Activity</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredParticipants.length > 0 ? (
-                filteredParticipants.map((participant) => (
-                  <TableRow key={participant.walletAddress} className="border-gray-800 hover:bg-gray-800/30">
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <div className="flex items-center gap-2">
-                        {participant.walletAddress && (
-                          <div className="text-xs text-gray-400 font-mono">
-                            {formatAddress(participant.walletAddress)}
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-800">
+              <thead className="bg-gray-800/50">
+                <tr>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('wallet')}
+                  >
+                    <div className="flex items-center">
+                      Wallet Address
+                      {sortBy.field === 'wallet' && (
+                        <span className="ml-1">
+                          {sortBy.direction === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('tickets')}
+                  >
+                    <div className="flex items-center">
+                      <Ticket className="w-4 h-4 mr-1" />
+                      Tickets
+                      {sortBy.field === 'tickets' && (
+                        <span className="ml-1">
+                          {sortBy.direction === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    <Wallet className="w-4 h-4 mr-1 inline" />
+                    Transactions
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('lastActivity')}
+                  >
+                    <div className="flex items-center">
+                      Last Activity
+                      {sortBy.field === 'lastActivity' && (
+                        <span className="ml-1">
+                          {sortBy.direction === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-gray-900 divide-y divide-gray-800">
+                {filteredParticipants.length > 0 ? (
+                  filteredParticipants.map((participant) => (
+                    <tr key={participant.walletAddress} className="hover:bg-gray-800/50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="text-sm font-medium text-blue-400">
+                            {`${participant.walletAddress.substring(0, 6)}...${participant.walletAddress.substring(participant.walletAddress.length - 4)}`}
                           </div>
-                        )}
-                          <button 
-                            onClick={() => copyToClipboard(participant.walletAddress)}
-                            className="text-gray-400 hover:text-white"
+                          <button
+                            className="ml-2 text-gray-400 hover:text-blue-400"
+                            onClick={() => navigator.clipboard.writeText(participant.walletAddress)}
                           >
-                            <Copy className="h-3.5 w-3.5" />
+                            <Copy className="w-3.5 h-3.5" />
                           </button>
-                          <a 
+                          <a
                             href={`https://etherscan.io/address/${participant.walletAddress}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-400 hover:text-blue-300"
+                            className="ml-1 text-gray-400 hover:text-blue-400"
                           >
-                            <ExternalLink className="h-3.5 w-3.5" />
+                            <ExternalLink className="w-3.5 h-3.5" />
                           </a>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium">{participant.tickets}</div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="font-medium">{participant.totalSpent} ETH</div>
-                      <div className="text-xs text-gray-400">
-                        ${(parseFloat(participant.totalSpent) * 1800).toFixed(2)} USD
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="font-medium">{participant.txCount}</div>
-                      <div className="text-xs text-gray-400">transactions</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">{participant.lastActivity}</div>
-                      <div className="text-xs text-gray-400">Joined {participant.joinDate}</div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center text-gray-400">
-                    No participants found matching your criteria.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Joined {formatDate(participant.joinDate)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-white">{participant.tickets}</div>
+                        <div className="text-xs text-gray-400">total tickets</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-white">{participant.txCount}</div>
+                        <div className="text-xs text-gray-400">transactions</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        {formatTimeAgo(participant.lastActivity)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <Button variant="ghost" size="sm" className="text-blue-400 hover:text-blue-300">
+                          View Activity
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
+                      {searchQuery ? 'No participants found matching your search' : 'No participants found'}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
       </Card>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-blue-500/10 border-blue-500/30">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-blue-400">Total Wallets</p>
-                <p className="text-2xl font-bold">{participantsData.length}</p>
-              </div>
-              <div className="p-2 rounded-full bg-blue-500/20">
-                <Wallet className="h-5 w-5 text-blue-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-purple-500/10 border-purple-500/30">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-purple-400">Total Tickets</p>
-                <p className="text-2xl font-bold">
-                  {participantsData.reduce((sum, p) => sum + p.tickets, 0)}
-                </p>
-              </div>
-              <div className="p-2 rounded-full bg-purple-500/20">
-                <Ticket className="h-5 w-5 text-purple-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-green-500/10 border-green-500/30">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-green-400">Total Volume</p>
-                <p className="text-2xl font-bold">
-                  {participantsData.reduce((sum, p) => sum + parseFloat(p.totalSpent), 0).toFixed(2)} ETH
-                </p>
-              </div>
-              <div className="p-2 rounded-full bg-green-500/20">
-                {/* <Ethereum className="h-5 w-5 text-green-400" /> */}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-amber-500/10 border-amber-500/30">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-amber-400">Avg. Tickets/Wallet</p>
-                <p className="text-2xl font-bold">
-                  {(participantsData.reduce((sum, p) => sum + p.tickets, 0) / participantsData.length).toFixed(1)}
-                </p>
-              </div>
-              <div className="p-2 rounded-full bg-amber-500/20">
-                <BarChart2 className="h-5 w-5 text-amber-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 export type RaffleStatus = 'Upcoming' | 'Active' | 'Drawn' | 'PaidOut' | 'Cancelled';
 
 export interface Community {
+  id: string | number;
   name: string;
   created: string;
   owner: string;
@@ -25,6 +26,7 @@ export interface Community {
 
 export const communityData: Community[] = [
   {
+    id: 1,
     name: "Tech Raffle 2024",
     created: "2024-03-15",
     owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF51111",
@@ -35,7 +37,7 @@ export const communityData: Community[] = [
         token: "0x0000000000000000000000000000000000000000", // ETH
         endTime: Math.floor(new Date("2024-12-25").getTime() / 1000),
         winnersCount: 10,
-        maxParticipants: 2000,
+        maxParticipants: 200,
         status: "Upcoming",
         totalPrize: "20000000000000000000", // 20 ETH in wei
         requireCommunityMembership: true,
@@ -52,7 +54,7 @@ export const communityData: Community[] = [
         token: "0x0000000000000000000000000000000000000000", // ETH
         endTime: Math.floor(new Date("2024-06-01").getTime() / 1000),
         winnersCount: 5,
-        maxParticipants: 1000,
+        maxParticipants: 100,
         status: "Cancelled",
         totalPrize: "2500000000000000000", // 2.5 ETH in wei
         requireCommunityMembership: true,
@@ -66,6 +68,7 @@ export const communityData: Community[] = [
     ],
   },
   {
+    id: 2,
     name: "EcoSolution Collective",
     created: "2024-04-15",
     owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF52222",
@@ -76,7 +79,7 @@ export const communityData: Community[] = [
         token: "0x0000000000000000000000000000000000000000", // ETH
         endTime: Math.floor(new Date("2024-04-15").getTime() / 1000),
         winnersCount: 5,
-        maxParticipants: 1000,
+        maxParticipants: 100,
         status: "Active",
         totalPrize: "10000000000000000000", // 10 ETH in wei
         requireCommunityMembership: true,
@@ -93,7 +96,7 @@ export const communityData: Community[] = [
         token: "0x1234...", // Some ERC20 token
         endTime: Math.floor(new Date("2023-07-01").getTime() / 1000),
         winnersCount: 3,
-        maxParticipants: 500,
+        maxParticipants: 50,
         status: "PaidOut",
         totalPrize: "5000000000000000000", // 5000 USDC (assuming 6 decimals)
         requireCommunityMembership: false,
@@ -107,6 +110,7 @@ export const communityData: Community[] = [
     ],
   },
   {
+    id: 3,
     name: "Creative Minds Studio",
     created: "2024-05-15",
     owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF53333",
@@ -117,7 +121,7 @@ export const communityData: Community[] = [
         token: "0x0000000000000000000000000000000000000000", // ETH
         endTime: Math.floor(new Date("2024-04-15").getTime() / 1000),
         winnersCount: 5,
-        maxParticipants: 1000,
+        maxParticipants: 100,
         status: "Active",
         totalPrize: "10000000000000000000", // 10 ETH in wei
         requireCommunityMembership: true,
@@ -131,6 +135,7 @@ export const communityData: Community[] = [
     ],
   },
   {
+    id: 4,
     name: "Global health Initiative",
     created: "2024-06-15",
     owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF54444",
@@ -141,7 +146,7 @@ export const communityData: Community[] = [
         token: "0x0000000000000000000000000000000000000000", // ETH
         endTime: Math.floor(new Date("2024-04-15").getTime() / 1000),
         winnersCount: 5,
-        maxParticipants: 1000,
+        maxParticipants: 100,
         status: "Active",
         totalPrize: "10000000000000000000", // 10 ETH in wei
         requireCommunityMembership: true,
@@ -155,6 +160,7 @@ export const communityData: Community[] = [
     ],
   },
   {
+    id: 5,
     name: "Tech Inc",
     created: "2024-07-15",
     owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF55555",
@@ -179,6 +185,7 @@ export const communityData: Community[] = [
     ],
   },
   {
+    id: 6,
     name: "Tech Raffle ",
     created: "2025-10-15",
     owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF56666",
@@ -203,6 +210,7 @@ export const communityData: Community[] = [
     ],
   },
   {
+    id: 7,
     name: "EcoSolution dsdol Collective",
     created: "2024-04-15",
     owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF57777",
@@ -227,6 +235,7 @@ export const communityData: Community[] = [
     ],
   },
   {
+    id: 8,
     name: "Creative Minds Studio",
     created: "2024-05-15",
     owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF58888",
@@ -251,6 +260,7 @@ export const communityData: Community[] = [
     ],
   },
   {
+    id: 9,
     name: "Global health Initiative",
     created: "2024-06-15",
     owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF59999",
@@ -275,6 +285,7 @@ export const communityData: Community[] = [
     ],
   },
   {
+    id: 10,
     name: "Tech Innovators Inc",
     created: "2024-07-15",
     owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF50011",
@@ -299,6 +310,7 @@ export const communityData: Community[] = [
     ],
   },
   {
+    id: 11,
     name: "EcoSolution Collective",
     created: "2024-04-15",
     owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF50022",
@@ -323,6 +335,7 @@ export const communityData: Community[] = [
     ],
   },
   {
+    id: 12,
     name: "Creative Minds Studio",
     created: "2024-05-15",
     owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF50033",
@@ -347,6 +360,7 @@ export const communityData: Community[] = [
     ],
   },
   {
+    id: 13,
     name: "Global health Initiative",
     created: "2024-06-15",
     owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF50044",
@@ -371,6 +385,7 @@ export const communityData: Community[] = [
     ],
   },
   {
+    id: 15,
     name: "Tech Innovators Inc",
     created: "2024-07-15",
     owner: "0x08d0d1572A8a714D90D670Ea344Dd23B1dF50055",
