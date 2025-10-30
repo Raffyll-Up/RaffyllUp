@@ -53,7 +53,7 @@ export function CommunityCard({ community }: CommunityCardProps) {
             <Button 
             variant="outline" 
             className="text-gray-700 hover:text-gray-500 hover:bg-gray-500/10"
-            onClick={() => router.push(`/${community.name}`)}
+            onClick={() => router.push(`/communities/${community.id}`)}
             >View Community</Button>
           </div>
         </CardContent>

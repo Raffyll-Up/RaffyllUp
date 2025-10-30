@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Award } from "lucide-react";
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns';
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 // import { communityData } from "@/lib/communityData";
@@ -43,15 +43,53 @@ export function RaffleDetailsModal({ raffle, open, onOpenChange, onJoinRaffle }:
   const [isLoading, setIsLoading] = useState(false);
   // const [ticketCount, setTicketCount] = useState(1);
   
-  const startDate = parseISO(raffle.startDate);
-  const endDate = parseISO(raffle.endTime);
+  // Robust date parsing: support array [YYYY,MM,DD], ISO string, Date string, or numeric timestamp
+  const parseAnyDate = (value: string | string[] | number | undefined): Date | null => {
+    if (!value) return null;
+
+    // Array like [YYYY, MM, DD]
+    if (Array.isArray(value) && value.length >= 3) {
+      const y = parseInt(value[0], 10);
+      const m = parseInt(value[1], 10) - 1;
+      const d = parseInt(value[2], 10);
+      const dt = new Date(y, m, d);
+      return isValid(dt) ? dt : null;
+    }
+
+    // Strings: try ISO first, then generic Date constructor
+    if (typeof value === 'string') {
+      const iso = parseISO(value);
+      if (isValid(iso)) return iso;
+      const d = new Date(value);
+      if (isValid(d)) return d;
+      const n = Number(value);
+      if (!Number.isNaN(n)) {
+        const dt2 = new Date(n);
+        if (isValid(dt2)) return dt2;
+      }
+      return null;
+    }
+
+    // Numbers: treat as epoch milliseconds
+    if (typeof value === 'number') {
+      const dt = new Date(value);
+      return isValid(dt) ? dt : null;
+    }
+
+    return null;
+  };
+
+  const startDate = parseAnyDate(raffle.startDate) || new Date();
+  const endDate = parseAnyDate(raffle.endTime) || startDate;
   const now = new Date();
   const isActive = raffle.status === 'Active';
   // const isCompleted = ['Drawn', 'PaidOut'].includes(raffle.status);
   
   // Calculate progress percentage
-  const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-  const daysPassed = Math.ceil((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  let totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  if (!isFinite(totalDays) || totalDays <= 0) totalDays = 1;
+  let daysPassed = Math.ceil((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  if (!isFinite(daysPassed) || daysPassed < 0) daysPassed = 0;
   const progress = Math.min(100, Math.max(0, (daysPassed / totalDays) * 100));
 
   const handleJoinRaffle = async () => {

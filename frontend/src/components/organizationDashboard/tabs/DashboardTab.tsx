@@ -1,18 +1,19 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useMemo } from "react";
-import { communityData } from "@/lib/communityData";
+import { Community, communityData } from "@/lib/communityData";
+// import { RaffleDetailsModal } from "@/components/raffles/RaffleDetailsModal";
+import { Button } from "@/components/ui/button";
 
-type MetricCardProps = {
-  title: string;
-  value: string | number;
-  change?: string;
-  changeType?: 'increase' | 'decrease' | 'neutral';
-  icon?: React.ReactNode;
-};
+interface DashboardTabProps {
+  // Either pass a community object directly, or pass the selected organisation's name
+  community?: Community;
+  selectedOrgName?: string;
+}
 
-const MetricCard = ({ title, value, change, changeType = 'neutral', icon }: MetricCardProps) => (
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const MetricCard = ({ title, value, change, changeType = 'neutral', icon }: any) => (
   <Card className="bg-gray-900 border-gray-800 hover:border-gray-700 transition-colors">
     <CardHeader className="pb-2">
       <div className="flex justify-between items-center">
@@ -34,48 +35,76 @@ const MetricCard = ({ title, value, change, changeType = 'neutral', icon }: Metr
   </Card>
 );
 
-export function DashboardTab() {
-  // Calculate metrics based on the current community's raffles
+export function DashboardTab({ community: communityProp, selectedOrgName }: DashboardTabProps) {
+  // Resolve community: prefer provided prop, otherwise lookup by selectedOrgName in communityData
+  const community = useMemo<Community>(() => {
+    if (communityProp) return communityProp;
+    if (selectedOrgName) {
+      return communityData.find((c) => c.name === selectedOrgName) ?? communityData[0];
+    }
+    // Fallback to the first community in the data set
+    return communityData[0];
+  }, [communityProp, selectedOrgName]);
+
+  // Use a safe raffles array so hooks are called unconditionally
+  const raffles = useMemo(() => community?.raffles ?? [], [community]);
+
+  // Calculate metrics based on the resolved community's raffles
   const metrics = useMemo(() => {
-    const comName = communityData[0].name;
-    const activeRaffles = communityData[0].raffles.filter(r => r.status === 'Active').length;
-    const completedRaffles = communityData[0].raffles.filter(r => r.status === 'PaidOut' || r.status === 'Drawn').length;
-    const upcomingRaffles = communityData[0].raffles.filter(r => r.status === 'Upcoming').length;
-    
-    const totalParticipants = communityData[0].raffles.reduce(
-      (sum, raffle) => sum + raffle.participants.length, 0
+    const activeRaffles = raffles.filter((r) => r.status === "Active").length;
+    const completedRaffles = raffles.filter((r) => r.status === "PaidOut" || r.status === "Drawn").length;
+    const upcomingRaffles = raffles.filter((r) => r.status === "Upcoming").length;
+
+    const totalParticipants = raffles.reduce(
+      (sum, raffle) => sum + (raffle.participants?.length ?? 0),
+      0
     );
-    
-    const totalFunds = communityData[0].raffles.reduce((sum, raffle) => {
-      const amount = parseFloat(raffle.prizePool.replace(/[^0-9.]/g, '')) || 0;
+
+    const totalFunds = raffles.reduce((sum, raffle) => {
+      const amount = parseFloat((raffle.prizePool || "").replace(/[^0-9.]/g, "")) || 0;
       return sum + amount;
     }, 0);
 
     return {
-      comName,
       activeRaffles,
       completedRaffles,
+      upcomingRaffles,
       totalParticipants,
-      totalFunds: totalFunds.toFixed(2),
-      upcomingRaffles
+      totalFunds: `$${totalFunds.toLocaleString()}`,
     };
-  }, []);
+  }, [raffles]);
+
+  // Get recent raffles (sort by endDate or startDate if available)
+  const recentRaffles = useMemo(() => {
+    return [...raffles]
+      .sort((a, b) => {
+        const da = new Date(a.endDate || a.startDate || 0).getTime();
+        const db = new Date(b.endDate || b.startDate || 0).getTime();
+        return db - da;
+      })
+      .slice(0, 5);
+  }, [raffles]);
 
   return (
     <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Welcome to {community.name} Dashboard</h2>
+      <p className="text-gray-400">
+        Manage your community raffles, participants, and funds in one place.
+      </p>
+
       {/* Company Info */}
       <Card className="bg-gray-900 border-gray-800">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row items-center md:space-x-6 space-y-4 md:space-y-0">
             <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
-              {communityData[0].name.charAt(0).toUpperCase()}
+              {community.name.charAt(0).toUpperCase()}
             </div>
             <div className="text-center md:text-left">
-              <h2 className="text-xl font-semibold">{metrics.comName}</h2>
-              <p className="text-gray-400 mt-1">{communityData[0].owner}</p>
+              <h2 className="text-xl font-semibold">{community.name}</h2>
+              <p className="text-gray-400 mt-1">{community.owner}</p>
               <div className="flex flex-wrap gap-2 mt-2 justify-center md:justify-start">
                 <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">Active</Badge>
-                <Badge variant="outline" className="text-gray-400">Est. {communityData[0].created}</Badge>
+                <Badge variant="outline" className="text-gray-400">Est. {community.created}</Badge>
                 <Badge variant="outline" className="text-gray-400">Premium</Badge>
               </div>
             </div>
@@ -101,13 +130,13 @@ export function DashboardTab() {
           />
           <MetricCard 
             title="Total Funds Raised" 
-            value={`$${metrics.totalFunds}`}
+            value={metrics.totalFunds}
             change="+12.5% from last month"
             changeType="increase"
           />
           <MetricCard 
             title="Completion Rate" 
-            value={`${Math.round((metrics.completedRaffles / communityData[0].raffles.length) * 100)}%`}
+            value={`${Math.round((metrics.completedRaffles / community.raffles.length) * 100)}%`}
             change="+5% from last quarter"
             changeType="increase"
           />
@@ -136,7 +165,7 @@ export function DashboardTab() {
                 </tr>
               </thead>
               <tbody className="bg-gray-900/50 divide-y divide-gray-800">
-                {communityData[0].raffles.map((raffle) => (
+                {recentRaffles.map((raffle) => (
                   <tr key={raffle.id} className="hover:bg-gray-800/50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="font-medium text-white">{raffle.name}</div>
