@@ -257,7 +257,7 @@ export function ParticipantsTab({ community }: ParticipantsTabProps) {
                   >
                     <div className="flex items-center gap-2">
                       <Ticket className="w-4 h-4" />
-                      <span>Tickets</span>
+                      <span>Entries</span>
                       {sortBy.field === "tickets" && (
                         <span className="text-blue-400">
                           {sortBy.direction === "asc" ? "↑" : "↓"}
@@ -456,7 +456,7 @@ export function ParticipantsTab({ community }: ParticipantsTabProps) {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-text-secondary">
-                    Total Tickets
+                    Total Entries
                   </label>
                   <p className="text-white">{selectedParticipant.tickets}</p>
                 </div>

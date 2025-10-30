@@ -35,7 +35,7 @@ export function CreateCommunityDialog() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={setOpen} >
       <DialogTrigger asChild>
         <Button className="gap-2 bg-white text-teal-600 hover:bg-teal-50 font-medium">
           <Plus className="h-4 w-4" />

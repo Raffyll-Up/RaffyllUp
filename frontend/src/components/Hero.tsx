@@ -46,7 +46,7 @@ export function Hero() {
               <ArrowRight className="ml-2 w-5 h-5" />
             </Link>
             <Link 
-              href="/create"
+              href="/home"
               className="inline-flex items-center justify-center px-8 py-4 bg-transparent border-2 border-gray-700 hover:border-teal-400/50 text-white font-medium rounded-lg transition-all duration-200 hover:bg-gray-800/30"
             >
               Create Raffle
@@ -70,7 +70,7 @@ export function Hero() {
             </div>
           </div>
             {/* Countdown Overlay */}
-              <div className="text-sm text-gray-300">
+              <div className="text-sm text-gray-300 hidden">
                 Redirecting in
                 <span className="text-md font-bold text-teal-400 pl-2">
                   {formattedTime}

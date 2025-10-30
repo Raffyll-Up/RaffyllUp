@@ -74,7 +74,7 @@ export function Organizations() {
                 </div>
                 <div className="px-6 pb-6">
                   <Link 
-                    href={`/dashboard/${encodeURIComponent(org.name.toLowerCase().replace(/\s+/g, '-'))}`}
+                    href={`/communities/${org?.id}`}
                     className="text-sm font-medium text-teal-400 hover:text-teal-300 transition-colors flex items-center"
                   >
                     View Dashboard

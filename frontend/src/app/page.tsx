@@ -14,11 +14,11 @@ export default function Home() {
   const { isConnected } = useAccount();
   
   // Redirect to dashboard if wallet is connected
-  useEffect(() => {
-    if (isConnected) {
-      router.push('/home');
-    }
-  }, [isConnected, router]);
+  // useEffect(() => {
+  //   if (isConnected) {
+  //     router.push('/home');
+  //   }
+  // }, [isConnected, router]);
 
   return (
     <div className="relative flex min-h-screen w-full flex-col bg-gradient-to-b from-dark-primary/5 via-dark-primary/20 to-dark-primary/5 overflow-x-hidden">

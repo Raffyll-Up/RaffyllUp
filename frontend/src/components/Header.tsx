@@ -62,7 +62,7 @@ export function Header() {
               size={20}
               className="text-teal-400 group-hover:rotate-12 transition-transform duration-300"
             />
-            <h2 className="text-xl font-bold text-teal-400">Raffyl</h2>
+            <h2 className="text-xl font-bold text-teal-400">RaffyllUp</h2>
           </Link>
 
           {/* Mobile menu button */}

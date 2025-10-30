@@ -86,7 +86,7 @@ export default function RafflePage() {
     );
   }
 
-  const { raffle, communityName } = raffleData;
+  const { raffle, communityName, communityOwner } = raffleData;
   
   // Format the end date
   const formattedEndDate = raffle.endDate 
@@ -183,7 +183,7 @@ export default function RafflePage() {
                 <Button className="bg-teal-600 hover:bg-teal-700 flex-1">
                   Enter Raffle
                 </Button>
-                <Button variant="outline" className="flex-1">
+                <Button variant="outline" className="flex-1 text-black">
                   Share
                 </Button>
               </div>
@@ -242,8 +242,8 @@ export default function RafflePage() {
               </div>
               <Button 
                 variant="outline" 
-                className="w-full mt-4"
-                onClick={() => router.push(`/communities/${communityName}`)}
+                className="w-full mt-4 text-black"
+                onClick={() => router.push(`/communities/${communityData?.find(cc => cc.owner === communityOwner && cc.name === communityName)?.id}`)}
               >
                 View Community
               </Button>

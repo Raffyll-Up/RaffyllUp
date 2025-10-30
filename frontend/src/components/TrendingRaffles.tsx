@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Clock, Coins } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface RaffleCardProps {
   title: string;
@@ -37,7 +38,7 @@ const RaffleCard = ({ raffle }: { raffle: RaffleCardProps }) => (
             <span className="text-white font-medium">{raffle.prizePool}</span>
           </div>
         </div>
-        <div>
+        <div className="hidden">
           <p className="text-gray-400 text-xs mb-1">Ticket Price</p>
           <div className="flex items-center">
             <Coins className="w-4 h-4 text-teal-400 mr-1" />
@@ -49,7 +50,7 @@ const RaffleCard = ({ raffle }: { raffle: RaffleCardProps }) => (
       <div className="mt-auto">
         <div className="flex justify-between text-xs text-gray-400 mb-2">
           <span>{raffle.participants} participants</span>
-          <span>Max 1000 tickets</span>
+          <span>Max 1000</span>
         </div>
         <div className="w-full bg-gray-800 rounded-full h-1.5 mb-3">
           <div 
@@ -58,7 +59,7 @@ const RaffleCard = ({ raffle }: { raffle: RaffleCardProps }) => (
           ></div>
         </div>
         <button className="w-full bg-teal-500 hover:bg-teal-600 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors">
-          Buy Ticket
+          Join Raffle
         </button>
       </div>
     </div>
@@ -68,7 +69,7 @@ const RaffleCard = ({ raffle }: { raffle: RaffleCardProps }) => (
 const raffles: RaffleCardProps[] = [
   {
     title: "CryptoPunk Giveaway",
-    prizePool: "2.5",
+    prizePool: "2.5 ETH",
     timeLeft: "2d 14h 32m",
     image: "https://images.unsplash.com/photo-1577174787901-1af99a1227af?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTAwNDR8MHwxfHNlYXJjaHwxfHx3b29kJTIwY2lyY3VsYXIlMjByaW5ncyUyMHRleHR1cmV8ZW58MHwwfHx8MTc2MDYyODUyNnww&ixlib=rb-4.1.0&q=85",
     alt: "CryptoPunk Raffle",
@@ -77,7 +78,7 @@ const raffles: RaffleCardProps[] = [
   },
   {
     title: "Ethereum Maxi Raffle",
-    prizePool: "5.0",
+    prizePool: "50 USDC",
     timeLeft: "1d 8h 15m",
     image: "https://images.unsplash.com/photo-1706719683266-9924744c1c9b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTAwNDR8MHwxfHNlYXJjaHw0fHx3b29kJTIwc2hlbGwlMjBvcmdhbmljJTIwdGV4dHVyZXxlbnwwfDB8fHwxNzYwNjI4NTI2fDA&ixlib=rb-4.1.0&q=85",
     alt: "Ethereum Raffle",
@@ -86,7 +87,7 @@ const raffles: RaffleCardProps[] = [
   },
   {
     title: "NFT Art Collection",
-    prizePool: "1.2",
+    prizePool: "1.2 ETH",
     timeLeft: "3d 5h 47m",
     image: "https://images.unsplash.com/photo-1683778203265-7dc8ff00df18?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTAwNDR8MHwxfHNlYXJjaHwzfHx3b29kJTIwZ3JhaW4lMjB0ZXh0dXJlJTIwbmF0dXJhbHxlbnwwfDB8fHwxNzYwNjI4NTI3fDA&ixlib=rb-4.1.0&q=85",
     alt: "NFT Art Raffle",
@@ -95,7 +96,7 @@ const raffles: RaffleCardProps[] = [
   },
   {
     title: "DeFi Yield Vault",
-    prizePool: "8.5",
+    prizePool: "85 USDT",
     timeLeft: "5h 22m",
     image: "https://images.unsplash.com/photo-1639765214744-64ef8fae5c4a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTAwNDR8MHwxfHNlYXJjaHwxfHxjcnlwdG8lMjBjdXJyZW5jeSUyMGJpdGNvaW58ZW58MHwwfHx8MTc2MDYyODUyNnww&ixlib=rb-4.1.0&q=85",
     alt: "DeFi Raffle",
@@ -105,6 +106,7 @@ const raffles: RaffleCardProps[] = [
 ];
 
 export function TrendingRaffles() {
+  const router = useRouter()
   return (
     <section className="w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -113,7 +115,7 @@ export function TrendingRaffles() {
             <h2 className="text-2xl font-bold text-white mb-2">Trending Raffles</h2>
             <p className="text-gray-400">Participate in the hottest raffles on the blockchain</p>
           </div>
-          <button className="mt-4 md:mt-0 px-6 py-2.5 rounded-lg border border-teal-400/30 text-teal-300 hover:bg-teal-400/10 transition-colors text-sm font-medium">
+          <button onClick={()=>router.push('/raffles')} className="mt-4 md:mt-0 px-6 py-2.5 cursor-pointer rounded-lg border border-teal-400/30 text-teal-300 hover:bg-teal-400/10 transition-colors text-sm font-medium">
             View All Raffles
           </button>
         </div>
