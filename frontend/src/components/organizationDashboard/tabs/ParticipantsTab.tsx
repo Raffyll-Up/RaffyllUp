@@ -10,6 +10,7 @@ import {
   BarChart2,
   Ticket,
   Wallet,
+  Users,
 } from "lucide-react";
 import {
   Dialog,
@@ -60,6 +61,9 @@ export function ParticipantsTab({ community }: ParticipantsTabProps) {
 
   // Aggregate all unique wallet addresses from all raffles
   const participants = useMemo(() => {
+    // Debug log to check community.raffles
+    console.log('Community Raffles:', community.raffles);
+    
     const participantMap = new Map<
       string,
       {
@@ -72,67 +76,87 @@ export function ParticipantsTab({ community }: ParticipantsTabProps) {
       }
     >();
 
+    // Check if community.raffles is defined and is an array
+    if (!Array.isArray(community.raffles)) {
+      console.error('community.raffles is not an array:', community.raffles);
+      return [];
+    }
+
     community.raffles.forEach((raffle) => {
+      // Skip if raffle or participants is not defined
+      if (!raffle || !Array.isArray(raffle.participants)) return;
+      
       raffle.participants.forEach((walletAddress) => {
-        if (!participantMap.has(walletAddress)) {
-          participantMap.set(walletAddress, {
-            walletAddress,
+        if (!walletAddress) return; // Skip invalid wallet addresses
+        
+        const normalizedAddress = walletAddress.toLowerCase();
+        
+        if (!participantMap.has(normalizedAddress)) {
+          participantMap.set(normalizedAddress, {
+            walletAddress: normalizedAddress,
             tickets: 1,
-            lastActivity: new Date().toISOString(), // fallback to now
-            joinDate: new Date().toISOString(), // fallback to now
+            lastActivity: new Date().toISOString(),
+            joinDate: new Date().toISOString(),
             status: "active",
             txCount: 1,
           });
         } else {
-          const existing = participantMap.get(walletAddress)!;
+          const existing = participantMap.get(normalizedAddress)!;
           existing.tickets += 1;
           existing.txCount += 1;
-          // Optionally update lastActivity/joinDate if you have timestamps
+          // Update lastActivity to the most recent activity
+          existing.lastActivity = new Date().toISOString();
         }
       });
     });
 
-    return Array.from(participantMap.values());
+    const participantsList = Array.from(participantMap.values());
+    console.log('Generated participants:', participantsList);
+    return participantsList;
   }, [community.raffles]);
 
   const filteredParticipants = useMemo(() => {
-    return participants
-      .filter((participant) => {
-        const matchesSearch = participant.walletAddress
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase());
-        const matchesStatus =
-          statusFilter === "all" ||
-          (statusFilter === "active" && participant.status === "active") ||
-          (statusFilter === "inactive" && participant.status !== "active");
+    console.log('Filtering participants with:', { searchQuery, statusFilter, participantsCount: participants.length });
+    
+    if (participants.length === 0) {
+      console.log('No participants found in the community');
+      return [];
+    }
 
-        return matchesSearch && matchesStatus;
-      })
-      .sort((a, b) => {
-        if (sortBy.field === "wallet") {
-          return sortBy.direction === "asc"
-            ? a.walletAddress.localeCompare(b.walletAddress)
-            : b.walletAddress.localeCompare(a.walletAddress);
-        } else if (sortBy.field === "tickets") {
-          return sortBy.direction === "asc"
-            ? a.tickets - b.tickets
-            : b.tickets - a.tickets;
-        } else {
-          // lastActivity
-          return sortBy.direction === "asc"
-            ? new Date(a.lastActivity).getTime() -
-                new Date(b.lastActivity).getTime()
-            : new Date(b.lastActivity).getTime() -
-                new Date(a.lastActivity).getTime();
-        }
-      });
+    const filtered = participants.filter((participant) => {
+      const matchesSearch = searchQuery === '' || 
+        participant.walletAddress.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'all' || 
+        (statusFilter === 'active' && participant.status === 'active') || 
+        (statusFilter === 'inactive' && participant.status !== 'active');
+
+      return matchesSearch && matchesStatus;
+    });
+
+    console.log(`Filtered to ${filtered.length} participants`);
+    return filtered.sort((a, b) => {
+      if (sortBy.field === 'wallet') {
+        return sortBy.direction === 'asc'
+          ? a.walletAddress.localeCompare(b.walletAddress)
+          : b.walletAddress.localeCompare(a.walletAddress);
+      } else if (sortBy.field === 'tickets') {
+        return sortBy.direction === 'asc' 
+          ? a.tickets - b.tickets 
+          : b.tickets - a.tickets;
+      } else {
+        // lastActivity
+        const timeA = new Date(a.lastActivity).getTime();
+        const timeB = new Date(b.lastActivity).getTime();
+        return sortBy.direction === 'asc' ? timeA - timeB : timeB - timeA;
+      }
+    });
   }, [participants, searchQuery, statusFilter, sortBy]);
 
   const handleSort = (field: "wallet" | "tickets" | "lastActivity") => {
     setSortBy((prev) => ({
       field,
-      direction:
-        prev.field === field && prev.direction === "asc" ? "desc" : "asc",
+      direction: prev.field === field && prev.direction === "asc" ? "desc" : "asc",
     }));
   };
 
@@ -151,8 +175,7 @@ export function ParticipantsTab({ community }: ParticipantsTabProps) {
 
     if (diffInSeconds < 60) return "just now";
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-    if (diffInSeconds < 86400)
-      return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
     return `${Math.floor(diffInSeconds / 86400)}d ago`;
   };
 
@@ -171,7 +194,7 @@ export function ParticipantsTab({ community }: ParticipantsTabProps) {
         </div>
       </div>
 
-      <Card className="bg-dark-bg border-dark-secondary backdrop-blur-sm bg-opacity-50">
+      <Card className="bg-dark-bg/50 border-dark-secondary backdrop-blur-sm bg-opacity-50">
         <CardHeader className="p-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="relative w-full md:w-80">
@@ -211,7 +234,7 @@ export function ParticipantsTab({ community }: ParticipantsTabProps) {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-dark-secondary">
-              <thead className="bg-dark-secondary/20">
+              <thead className="bg-dark-secondary/50">
                 <tr>
                   <th
                     scope="col"
@@ -273,75 +296,105 @@ export function ParticipantsTab({ community }: ParticipantsTabProps) {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-dark-bg divide-y divide-dark-secondary/20">
-                {filteredParticipants.map((participant, index) => (
-                  <tr
-                    key={index}
-                    className="hover:bg-dark-secondary/10 transition-colors"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-200">
-                          {participant.walletAddress.slice(0, 6)}...
-                          {participant.walletAddress.slice(-4)}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-text-secondary hover:text-white"
-                          onClick={() =>
-                            navigator.clipboard.writeText(
-                              participant.walletAddress
-                            )
-                          }
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-text-secondary hover:text-white"
-                          onClick={() =>
-                            window.open(
-                              `https://etherscan.io/address/${participant.walletAddress}`,
-                              "_blank"
-                            )
-                          }
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                        </Button>
+              <tbody className="bg-dark-bg/50 divide-y divide-dark-secondary/20">
+                {filteredParticipants.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center justify-center space-y-4">
+                        <div className="p-4 rounded-full bg-dark-secondary/20">
+                          <Users className="h-8 w-8 text-text-secondary" />
+                        </div>
+                        <h3 className="text-lg font-medium text-white">No participants found</h3>
+                        <p className="text-text-secondary max-w-md">
+                          There are no participants matching your current filters. Try adjusting your search or filters.
+                        </p>
+                        {searchQuery && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              // Clear search query and reset filters
+                              setSearchQuery("");
+                              setStatusFilter("all");
+                            }}
+                            className="mt-2"
+                          >
+                            Clear filters
+                          </Button>
+                        )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm font-medium text-gray-200">
-                        {participant.tickets}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm font-medium text-gray-200">
-                        {participant.txCount}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className="text-sm font-medium text-gray-200"
-                        title={formatDate(participant.lastActivity)}
-                      >
-                        {formatTimeAgo(participant.lastActivity)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
-                        onClick={() => handleViewDetails(participant)}
-                      >
-                        View Details
-                      </Button>
-                    </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredParticipants.map((participant, index) => (
+                    <tr
+                      key={index}
+                      className="hover:bg-dark-secondary/10 transition-colors"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-200">
+                            {participant.walletAddress.slice(0, 6)}...
+                            {participant.walletAddress.slice(-4)}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-text-secondary hover:text-white"
+                            onClick={() =>
+                              navigator.clipboard.writeText(
+                                participant.walletAddress
+                              )
+                            }
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-text-secondary hover:text-white"
+                            onClick={() =>
+                              window.open(
+                                `https://etherscan.io/address/${participant.walletAddress}`,
+                                "_blank"
+                              )
+                            }
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm font-medium text-gray-200">
+                          {participant.tickets}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm font-medium text-gray-200">
+                          {participant.txCount}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className="text-sm font-medium text-gray-200"
+                          title={formatDate(participant.lastActivity)}
+                        >
+                          {formatTimeAgo(participant.lastActivity)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
+                          onClick={() => handleViewDetails(participant)}
+                        >
+                          View Details
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
