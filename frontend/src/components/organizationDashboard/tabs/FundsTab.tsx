@@ -6,11 +6,7 @@ import {
   Download, 
   ArrowUpRight, 
   ArrowDownRight, 
-  ArrowUpDown, 
-  // Filter, 
-  Search, 
-  // Copy, 
-  // ExternalLink
+  Search,
 } from "lucide-react";
 import { Community } from "@/lib/communityData";
 // import { formatEther } from "viem";
@@ -131,76 +127,102 @@ export function FundsTab({ community }: FundsTabProps) {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold">Funds</h2>
-          <p className="text-sm text-gray-400">Manage and track your community&apos;s financials</p>
+        <div className="space-y-2">
+          <h2 className="text-3xl font-extrabold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+            Funds
+          </h2>
+          <p className="text-text-secondary text-lg">
+            Manage and track your community&apos;s financials
+          </p>
         </div>
-        <div className="flex items-center gap-3">
-          
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="outline" 
+            className="bg-dark-secondary/10 border-dark-secondary hover:bg-dark-secondary/20 text-white transition-colors"
+          >
+            <ArrowUpRight className="w-4 h-4 mr-2" />
+            Withdraw
+          </Button>
+          <Button className="bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:opacity-90 transition-opacity">
+            <ArrowDownRight className="w-4 h-4 mr-2" />
+            Deposit
+          </Button>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gray-900 border-gray-800">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="bg-dark-bg border-dark-secondary hover:bg-dark-secondary/10 transition-all duration-200">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-400">Total Balance</CardTitle>
+            <CardTitle className="text-sm font-medium text-text-secondary">
+              Total Balance
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalFunds.toLocaleString()}</div>
-            <p className="text-sm text-green-400 mt-1 flex items-center">
-              <ArrowUpRight className="w-4 h-4 mr-1" />
+            <div className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+              ${totalFunds.toLocaleString()}
+            </div>
+            <p className="text-xs mt-1 text-emerald-400 flex items-center gap-1">
+              <ArrowUpRight className="w-3 h-3" />
               12.5% from last month
             </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-900 border-gray-800">
+        <Card className="bg-dark-bg border-dark-secondary hover:bg-dark-secondary/10 transition-all duration-200">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-400">Available to Withdraw</CardTitle>
+            <CardTitle className="text-sm font-medium text-text-secondary">
+              Available to Withdraw
+            </CardTitle>
           </CardHeader>
-          <CardContent className="flex items-end justify-between">
-            <div>
-              <div className="text-2xl font-bold">${(totalFunds * 0.9).toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
-              <p className="text-sm text-gray-400 mt-1">10% held for fees</p>
+          <CardContent>
+            <div className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+              ${(totalFunds * 0.9).toLocaleString(undefined, { maximumFractionDigits: 2 })}
             </div>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              Withdraw Funds
-            </Button>
+            <p className="text-xs text-text-secondary mt-1">
+              10% held for fees
+            </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-900 border-gray-800">
+        <Card className="bg-dark-bg border-dark-secondary hover:bg-dark-secondary/10 transition-all duration-200">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-400">Total Transactions</CardTitle>
+            <CardTitle className="text-sm font-medium text-text-secondary">
+              Total Transactions
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{transactions.length}</div>
-            <p className="text-sm text-gray-400 mt-1">{transactions.filter(tx => tx.type === 'deposit').length} deposits • {transactions.filter(tx => tx.type === 'prize').length} prizes</p>
+            <div className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+              {transactions.length}
+            </div>
+            <p className="text-xs text-text-secondary mt-1">
+              {transactions.filter(tx => tx.type === 'deposit').length} deposits • {transactions.filter(tx => tx.type === 'prize').length} prizes
+            </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Transaction History */}
-      <Card className="bg-gray-900 border-gray-800">
-        <CardHeader className="pb-2">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <h3 className="text-lg font-semibold">Transaction History</h3>
-              <p className="text-sm text-gray-400">All financial activities in your community</p>
+      <Card className="bg-dark-bg border-dark-secondary backdrop-blur-sm bg-opacity-50">
+        <CardHeader className="p-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="space-y-1.5">
+              <h3 className="text-xl font-bold text-white">Transaction History</h3>
+              <p className="text-sm text-text-secondary">
+                All financial activities in your community
+              </p>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <div className="flex items-center gap-4">
+              <div className="relative w-full md:w-80">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-text-secondary" />
                 <input
                   placeholder="Search transactions..."
-                  className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400 w-full md:w-64"
+                  className="w-full pl-10 bg-dark-secondary/10 border-dark-secondary text-white placeholder-text-secondary focus:border-blue-500/50 transition-colors rounded-lg py-2 px-3"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
               <select
-                className="bg-gray-800 border border-gray-700 text-white text-sm rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="bg-dark-secondary/10 border border-dark-secondary text-white text-sm rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500/50 transition-colors"
                 value={txTypeFilter}
                 onChange={(e) => setTxTypeFilter(e.target.value as TransactionType)}
               >
@@ -209,7 +231,10 @@ export function FundsTab({ community }: FundsTabProps) {
                 <option value="withdrawal">Withdrawals</option>
                 <option value="prize">Prizes</option>
               </select>
-              <Button variant="outline" className="border-gray-700">
+              <Button 
+                variant="outline" 
+                className="bg-dark-secondary/10 border-dark-secondary hover:bg-dark-secondary/20 text-white transition-colors"
+              >
                 <Download className="w-4 h-4 mr-2" />
                 Export Data
               </Button>
@@ -218,63 +243,71 @@ export function FundsTab({ community }: FundsTabProps) {
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-800">
-              <thead className="bg-gray-800/50">
+            <table className="min-w-full divide-y divide-dark-secondary">
+              <thead className="bg-dark-secondary/20">
                 <tr>
                   <th 
                     scope="col" 
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer"
+                    className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
                     onClick={() => handleSort('date')}
                   >
-                    <div className="flex items-center">
-                      Date & Time
+                    <div className="flex items-center gap-2">
+                      <span>Date & Time</span>
                       {sortBy.field === 'date' && (
-                        <ArrowUpDown className="ml-1 h-3.5 w-3.5" />
+                        <span className="text-blue-400">
+                          {sortBy.direction === 'asc' ? '↑' : '↓'}
+                        </span>
                       )}
                     </div>
                   </th>
                   <th 
                     scope="col" 
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider"
+                    className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider"
                   >
                     Transaction
                   </th>
                   <th 
                     scope="col" 
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider"
+                    className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
                     onClick={() => handleSort('type')}
                   >
-                    <div className="flex items-center">
-                      Type
+                    <div className="flex items-center gap-2">
+                      <span>Type</span>
                       {sortBy.field === 'type' && (
-                        <ArrowUpDown className="ml-1 h-3.5 w-3.5" />
+                        <span className="text-blue-400">
+                          {sortBy.direction === 'asc' ? '↑' : '↓'}
+                        </span>
                       )}
                     </div>
                   </th>
                   <th 
                     scope="col" 
-                    className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider"
+                    className="px-6 py-4 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
                     onClick={() => handleSort('amount')}
                   >
-                    <div className="flex items-center justify-end">
-                      Amount
+                    <div className="flex items-center justify-end gap-2">
+                      <span>Amount</span>
                       {sortBy.field === 'amount' && (
-                        <ArrowUpDown className="ml-1 h-3.5 w-3.5" />
+                        <span className="text-blue-400">
+                          {sortBy.direction === 'asc' ? '↑' : '↓'}
+                        </span>
                       )}
                     </div>
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-gray-900 divide-y divide-gray-800">
+              <tbody className="bg-dark-bg divide-y divide-dark-secondary/20">
                 {filteredTransactions.length > 0 ? (
                   filteredTransactions.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-gray-800/50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                        {formatDate(tx.date)}
+                    <tr key={tx.id} className="hover:bg-dark-secondary/10 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm font-medium text-gray-200">
+                          {formatDate(tx.date)}
+                        </span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm font-medium text-white">{tx.description}</div>
-                        <div className="text-xs text-gray-400">
+                        <div className="text-xs text-text-secondary">
                           Raffle ID: {tx.raffleId}
                           {tx.winner && (
                             <span className="ml-2 text-blue-400">
@@ -287,11 +320,11 @@ export function FundsTab({ community }: FundsTabProps) {
                         {getTxTypeBadge(tx.type)}
                       </td>
                       <td className={`px-6 py-4 whitespace-nowrap text-right text-sm font-medium ${tx.amount >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                        <div className="flex items-center justify-end">
+                        <div className="flex items-center justify-end gap-2">
                           {tx.amount >= 0 ? (
-                            <ArrowUpRight className="h-4 w-4 mr-1 text-green-400" />
+                            <ArrowUpRight className="h-4 w-4" />
                           ) : (
-                            <ArrowDownRight className="h-4 w-4 mr-1 text-red-400" />
+                            <ArrowDownRight className="h-4 w-4" />
                           )}
                           ${Math.abs(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>

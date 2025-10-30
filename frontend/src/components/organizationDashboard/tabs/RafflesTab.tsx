@@ -56,16 +56,51 @@ export function RafflesTab({ community }: RafflesTabProps) {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'Active':
-        return <Badge className="bg-green-500/20 text-green-400">Active</Badge>;
+        return (
+          <Badge 
+            variant="secondary"
+            className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1"
+          >
+            Active
+          </Badge>
+        );
       case 'Upcoming':
-        return <Badge className="bg-blue-500/20 text-blue-400">Upcoming</Badge>;
+        return (
+          <Badge 
+            variant="secondary"
+            className="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 py-1"
+          >
+            Upcoming
+          </Badge>
+        );
       case 'PaidOut':
       case 'Drawn':
-        return <Badge className="bg-purple-500/20 text-purple-400">Completed</Badge>;
+        return (
+          <Badge 
+            variant="secondary"
+            className="bg-purple-500/10 text-purple-400 border border-purple-500/20 px-3 py-1"
+          >
+            Completed
+          </Badge>
+        );
       case 'Cancelled':
-        return <Badge className="bg-red-500/20 text-red-400">Cancelled</Badge>;
+        return (
+          <Badge 
+            variant="secondary"
+            className="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-3 py-1"
+          >
+            Cancelled
+          </Badge>
+        );
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return (
+          <Badge 
+            variant="secondary"
+            className="bg-dark-secondary/10 text-text-secondary border border-dark-secondary px-3 py-1"
+          >
+            {status}
+          </Badge>
+        );
     }
   };
 
@@ -77,54 +112,60 @@ export function RafflesTab({ community }: RafflesTabProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 relative">
+      <div className="absolute inset-0 -z-10 bg-[url('/grid-pattern.svg')] bg-center [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+      
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <h2 className="text-2xl font-bold">Raffles</h2>
+        <h2 className="text-3xl font-extrabold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+          Raffles
+        </h2>
       </div>
 
-      <Card className="bg-gray-900 border-gray-800">
-        <CardHeader className="pb-2">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <Card className="bg-dark-bg border-dark-secondary backdrop-blur-sm bg-opacity-50">
+        <CardHeader className="p-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="relative w-full md:w-80">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-text-secondary" />
               <Input
                 placeholder="Search raffles..."
-                className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400"
+                className="pl-10 bg-dark-secondary/10 border-dark-secondary text-white placeholder-text-secondary focus:border-blue-500/50 transition-colors"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-gray-400" />
-              <select
-                className="bg-gray-800 border border-gray-700 text-white text-sm rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as RaffleStatus)}
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="upcoming">Upcoming</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-text-secondary" />
+                <select
+                  className="bg-dark-secondary/10 border border-dark-secondary text-white text-sm rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500/50 transition-colors"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as RaffleStatus)}
+                >
+                  <option value="all">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="upcoming">Upcoming</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
               <CreateRaffleModal/>
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-800">
-              <thead className="bg-gray-800/50">
+            <table className="min-w-full divide-y divide-dark-secondary">
+              <thead className="bg-dark-secondary/20">
                 <tr>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer"
+                    className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
                     onClick={() => handleSort('name')}
                   >
-                    <div className="flex items-center">
-                      Name
+                    <div className="flex items-center gap-2">
+                      <span>Name</span>
                       {sortBy.field === 'name' && (
-                        <span className="ml-1">
+                        <span className="text-blue-400">
                           {sortBy.direction === 'asc' ? '↑' : '↓'}
                         </span>
                       )}
@@ -132,13 +173,13 @@ export function RafflesTab({ community }: RafflesTabProps) {
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer"
+                    className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
                     onClick={() => handleSort('endDate')}
                   >
-                    <div className="flex items-center">
-                      End Date
+                    <div className="flex items-center gap-2">
+                      <span>End Date</span>
                       {sortBy.field === 'endDate' && (
-                        <span className="ml-1">
+                        <span className="text-blue-400">
                           {sortBy.direction === 'asc' ? '↑' : '↓'}
                         </span>
                       )}
@@ -146,59 +187,78 @@ export function RafflesTab({ community }: RafflesTabProps) {
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer"
+                    className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
                     onClick={() => handleSort('prize')}
                   >
-                    <div className="flex items-center">
-                      Prize Pool
+                    <div className="flex items-center gap-2">
+                      <span>Prize Pool</span>
                       {sortBy.field === 'prize' && (
-                        <span className="ml-1">
+                        <span className="text-blue-400">
                           {sortBy.direction === 'asc' ? '↑' : '↓'}
                         </span>
                       )}
                     </div>
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th 
+                    scope="col" 
+                    className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider"
+                  >
                     Participants
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th 
+                    scope="col" 
+                    className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider"
+                  >
                     Status
                   </th>
-                  <th scope="col" className="relative px-6 py-3">
+                  <th 
+                    scope="col" 
+                    className="px-6 py-4 relative"
+                  >
                     <span className="sr-only">Actions</span>
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-gray-900 divide-y divide-gray-800">
+              <tbody className="bg-dark-bg/50 divide-y divide-dark-secondary">
                 {filteredRaffles.length > 0 ? (
                   filteredRaffles.map((raffle) => (
-                    <tr key={raffle.id} className="hover:bg-gray-800/50">
+                    <tr key={raffle.id} className="hover:bg-dark-secondary/10 transition-all duration-200">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-white">{raffle.name}</div>
-                        <div className="text-xs text-gray-400">ID: {raffle.id}</div>
+                        <div className="text-xs text-text-secondary mt-0.5">ID: {raffle.id}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                        {new Date(raffle.endDate).toLocaleDateString()}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-white">
+                          {new Date(raffle.endDate).toLocaleDateString()}
+                        </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-300">
-                        {raffle.prizePool}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-white">{raffle.prizePool}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                        {raffle.participants.length} / {raffle.maxParticipants || '∞'}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-white">
+                          {raffle.participants.length}
+                          <span className="text-text-secondary"> / </span>
+                          {raffle.maxParticipants || '∞'}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getStatusBadge(raffle.status)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <Button variant="ghost" size="sm" className="text-blue-400 hover:text-blue-300">
-                          View
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          className="bg-dark-secondary/10 border-dark-secondary hover:bg-dark-secondary/20 text-white transition-colors"
+                        >
+                          View Details
                         </Button>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
+                    <td colSpan={6} className="px-6 py-8 text-center text-text-secondary">
                       No raffles found matching your criteria
                     </td>
                   </tr>

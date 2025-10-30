@@ -47,38 +47,7 @@ export default function OrganizationPage({ params }: OrganizationPageProps) {
     setActiveTab(value as TabValue);
   };
 
-  const renderTabContent = () => {
-    if (isLoading) {
-      return (
-        <div className="flex items-center justify-center h-64">
-          <p className="text-gray-400">Loading community data...</p>
-        </div>
-      );
-    }
-
-    if (!currentCommunity) {
-      return (
-        <div className="flex items-center justify-center h-64">
-          <p className="text-gray-400">Community not found</p>
-        </div>
-      );
-    }
-
-    switch (activeTab) {
-      case 'dashboard':
-        return <DashboardTab community={currentCommunity} />;
-      case 'raffles':
-        return <RafflesTab community={currentCommunity} />;
-      case 'participants':
-        return <ParticipantsTab community={currentCommunity} />;
-      case 'funds':
-        return <FundsTab community={currentCommunity} />;
-      case 'settings':
-        return <SettingsTab community={currentCommunity} />;
-      default:
-        return <DashboardTab community={currentCommunity} />;
-    }
-  };
+  // Loading and error states are now handled directly in the TabsContent components
 
   if (isLoading) {
     return (
@@ -95,16 +64,34 @@ export default function OrganizationPage({ params }: OrganizationPageProps) {
         onValueChange={handleTabChange}
         className="space-y-4"
       >
-        <TabsList className="grid grid-cols-3 lg:grid-cols-5 text-white bg-gray-900/50 p-1 rounded-lg right-24 top-20 absolute">
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="raffles">Raffles</TabsTrigger>
-          <TabsTrigger value="participants">Participants</TabsTrigger>
-          <TabsTrigger value="funds">Funds</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-        </TabsList>
+        <div className="flex justify-end my-6">
+          <TabsList className="grid grid-cols-3 lg:grid-cols-5 bg-dark-bg/5 border border-dark-secondary p-1 rounded-lg min-w-[600px]">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="raffles">Raffles</TabsTrigger>
+            <TabsTrigger value="participants">Participants</TabsTrigger>
+            <TabsTrigger value="funds">Funds</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
+          </TabsList>
+        </div>
         
-        <TabsContent value={activeTab} className="mt-6">
-          {renderTabContent()}
+        <TabsContent value="dashboard">
+          {!isLoading && currentCommunity && <DashboardTab community={currentCommunity} />}
+        </TabsContent>
+        
+        <TabsContent value="raffles">
+          {!isLoading && currentCommunity && <RafflesTab community={currentCommunity} />}
+        </TabsContent>
+        
+        <TabsContent value="participants">
+          {!isLoading && currentCommunity && <ParticipantsTab community={currentCommunity} />}
+        </TabsContent>
+        
+        <TabsContent value="funds">
+          {!isLoading && currentCommunity && <FundsTab community={currentCommunity} />}
+        </TabsContent>
+        
+        <TabsContent value="settings">
+          {!isLoading && currentCommunity && <SettingsTab community={currentCommunity} />}
         </TabsContent>
       </Tabs>
     </div>

@@ -14,26 +14,27 @@ interface DashboardTabProps {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const MetricCard = ({ title, value, change, changeType = 'neutral', icon }: any) => (
-  <Card className="bg-gray-900 border-gray-800 hover:border-gray-700 transition-colors">
+  <Card className="bg-dark-bg border-dark-secondary hover:bg-dark-secondary/10 transition-all duration-200">
     <CardHeader className="pb-2">
       <div className="flex justify-between items-center">
-        <CardTitle className="text-sm font-medium text-gray-400">{title}</CardTitle>
-        {icon && <div className="text-gray-500">{icon}</div>}
+        <CardTitle className="text-sm font-medium text-text-secondary">{title}</CardTitle>
+        {icon && <div className="text-text-secondary/80">{icon}</div>}
       </div>
     </CardHeader>
     <CardContent>
-      <div className="text-2xl font-bold">{value}</div>
+      <div className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">{value}</div>
       {change && (
-        <div className={`text-xs mt-1 ${
-          changeType === 'increase' ? 'text-green-400' : 
-          changeType === 'decrease' ? 'text-red-400' : 'text-gray-400'
+        <div className={`text-xs mt-1 flex items-center gap-1 ${
+          changeType === 'increase' ? 'text-emerald-400' : 
+          changeType === 'decrease' ? 'text-rose-400' : 'text-text-secondary'
         }`}>
-          {change} {changeType === 'increase' ? '↑' : changeType === 'decrease' ? '↓' : ''}
+          {change}
+          {changeType === 'increase' ? '↑' : changeType === 'decrease' ? '↓' : ''}
         </div>
       )}
     </CardContent>
-  </Card>
-);
+  </Card>);
+
 
 export function DashboardTab({ community: communityProp, selectedOrgName }: DashboardTabProps) {
   // Resolve community: prefer provided prop, otherwise lookup by selectedOrgName in communityData
@@ -86,26 +87,45 @@ export function DashboardTab({ community: communityProp, selectedOrgName }: Dash
   }, [raffles]);
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Welcome to {community.name} Dashboard</h2>
-      <p className="text-gray-400">
-        Manage your community raffles, participants, and funds in one place.
-      </p>
+    <div className="space-y-8 relative">
+      <div className="absolute inset-0 -z-10 bg-[url('/grid-pattern.svg')] bg-center [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+      
+      <div className="space-y-2">
+        <h2 className="text-3xl font-extrabold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+          Welcome to {community.name} Dashboard
+        </h2>
+        <p className="text-text-secondary text-lg">
+          Manage your community raffles, participants, and funds in one place.
+        </p>
+      </div>
 
       {/* Company Info */}
-      <Card className="bg-gray-900 border-gray-800">
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row items-center md:space-x-6 space-y-4 md:space-y-0">
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
+      <Card className="bg-dark-bg border-dark-secondary backdrop-blur-sm bg-opacity-50">
+        <CardContent className="p-8">
+          <div className="flex flex-col md:flex-row items-center md:space-x-8 space-y-6 md:space-y-0">
+            <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg">
               {community.name.charAt(0).toUpperCase()}
             </div>
-            <div className="text-center md:text-left">
-              <h2 className="text-xl font-semibold">{community.name}</h2>
-              <p className="text-gray-400 mt-1">{community.owner}</p>
-              <div className="flex flex-wrap gap-2 mt-2 justify-center md:justify-start">
-                <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">Active</Badge>
-                <Badge variant="outline" className="text-gray-400">Est. {community.created}</Badge>
-                <Badge variant="outline" className="text-gray-400">Premium</Badge>
+            <div className="text-center md:text-left space-y-3">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+                {community.name}
+              </h2>
+              <p className="text-text-secondary text-sm">
+                <span className="font-medium">Owner:</span> {community.owner}
+              </p>
+              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                <Badge variant="secondary" 
+                  className="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 py-1">
+                  Active
+                </Badge>
+                <Badge variant="outline" 
+                  className="text-text-secondary border-dark-secondary px-3 py-1">
+                  Est. {community.created}
+                </Badge>
+                <Badge variant="outline" 
+                  className="bg-purple-500/10 text-purple-400 border border-purple-500/20 px-3 py-1">
+                  Premium
+                </Badge>
               </div>
             </div>
           </div>
@@ -113,9 +133,9 @@ export function DashboardTab({ community: communityProp, selectedOrgName }: Dash
       </Card>
 
       {/* Key Metrics */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Key Metrics</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-white">Key Metrics</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <MetricCard 
             title="Active Raffles" 
             value={metrics.activeRaffles}
@@ -144,57 +164,65 @@ export function DashboardTab({ community: communityProp, selectedOrgName }: Dash
       </div>
 
       {/* Raffles Overview */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h2 className="text-xl font-semibold">Recent Raffles</h2>
-            <p className="text-gray-400 text-sm">Track and manage your organization&apos;s raffles</p>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-white">Recent Raffles</h2>
+            <p className="text-text-secondary">Track and manage your organization&apos;s raffles</p>
           </div>
         </div>
         
-        <div className="overflow-hidden rounded-lg border border-gray-800">
+        <div className="overflow-hidden rounded-xl border border-dark-secondary bg-dark-bg backdrop-blur-sm bg-opacity-50">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-800">
-              <thead className="bg-gray-800/50">
+            <table className="min-w-full divide-y divide-dark-secondary">
+              <thead className="bg-dark-secondary/20">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Raffle Name</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Prize Pool</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Duration</th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">Raffle Name</th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">Status</th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">Prize Pool</th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">Duration</th>
+                  <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-gray-900/50 divide-y divide-gray-800">
+              <tbody className="bg-dark-bg/50 divide-y divide-dark-secondary">
                 {recentRaffles.map((raffle) => (
-                  <tr key={raffle.id} className="hover:bg-gray-800/50 transition-colors">
+                  <tr key={raffle.id} className="hover:bg-dark-secondary/10 transition-all duration-200">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="font-medium text-white">{raffle.name}</div>
-                      <div className="text-xs text-gray-400">ID: {raffle.id}</div>
+                      <div className="text-xs text-text-secondary mt-0.5">ID: {raffle.id}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Badge
-                        variant={raffle.status === 'Active' ? 'default' : 'secondary'}
-                        className={`${raffle.status === 'Active' ? 'bg-green-500/20 text-green-400' :
-                          raffle.status === 'PaidOut' ? 'bg-gray-500/20 text-gray-400' :
-                          'bg-yellow-500/20 text-yellow-400'}`}
+                        variant="secondary"
+                        className={`${
+                          raffle.status === 'Active' 
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                          raffle.status === 'PaidOut' 
+                            ? 'bg-gray-500/10 text-gray-400 border-gray-500/20' :
+                          'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                        } border px-3 py-1`}
                       >
                         {raffle.status}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-300">
-                      <div className="font-medium">{raffle.prizePool}</div>
-                      <div className="text-xs text-gray-500">Total prize</div>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="font-medium text-white">{raffle.prizePool}</div>
+                      <div className="text-xs text-text-secondary mt-0.5">Total prize</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-300">{raffle.startDate} to {raffle.endDate}</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-sm text-white">{raffle.startDate} to {raffle.endDate}</div>
+                      <div className="text-xs text-text-secondary mt-0.5">
                         {raffle.status === 'Active' ? 'Ends in 15 days' : 
                          raffle.status === 'PaidOut' ? 'Completed' : 'Starts soon'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Button variant="ghost" size="sm" className="text-blue-400 hover:text-blue-300">
-                        View
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        className="bg-dark-secondary/10 border-dark-secondary hover:bg-dark-secondary/20 text-white"
+                      >
+                        View Details
                       </Button>
                     </td>
                   </tr>
