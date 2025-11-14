@@ -3,14 +3,16 @@ pragma solidity ^0.8.28;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {ICommunity} from "./interfaces/ICommunity.sol";
+import {TimelockVaultError} from "./libraries/Error.sol";
 
 /**
  * @title TimelockVault
  * @notice Community-level multi-token vault that locks funds per raffleId and releases only after timelock.
- *         Factory orchestrates payouts; Community performs funding and locking.
+ * Factory orchestrates payouts; Community performs funding and locking.
  */
-contract TimelockVault {
+contract TimelockVault is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     address public immutable community;
@@ -56,18 +58,18 @@ contract TimelockVault {
     event Withdrawn(address indexed token, address indexed to, uint256 amount);
 
     modifier onlyCommunity() {
-        require(msg.sender == community, "ONLY_COMMUNITY");
+        if (msg.sender != community) revert TimelockVaultError.ONLY_COMMUNITY();
         _;
     }
 
     modifier onlyFactory() {
-        require(msg.sender == factory, "ONLY_FACTORY");
+        if (msg.sender != factory) revert TimelockVaultError.ONLY_FACTORY();
         _;
     }
 
     constructor(address _community, address _factory) {
-        require(_community != address(0), "INVALID_COMMUNITY");
-        require(_factory != address(0), "INVALID_FACTORY");
+        if (_community == address(0)) revert TimelockVaultError.INVALID_COMMUNITY();
+        if (_factory == address(0)) revert TimelockVaultError.INVALID_FACTORY();
         community = _community;
         factory = _factory;
     }
@@ -81,18 +83,22 @@ contract TimelockVault {
         uint256 amount,
         uint64 endTime
     ) external onlyCommunity {
-        require(endTime > block.timestamp, "ENDTIME_IN_PAST");
-        require(amount > 0, "ZERO_AMOUNT");
+        if (endTime <= block.timestamp) revert TimelockVaultError.ENDTIME_IN_PAST();
+        if (amount == 0) revert TimelockVaultError.ZERO_AMOUNT();
+        
         Lock storage L = locks[raffleId][token];
-        require(!L.locked, "ALREADY_LOCKED");
+        if (L.locked) revert TimelockVaultError.ALREADY_LOCKED();
+        
         // ensure sufficient available (balance - reserved)
         uint256 currentBalance = getBalance(token);
         uint256 available = currentBalance - reservedTotal[token];
-        require(available >= amount, "INSUFFICIENT_AVAILABLE");
+        if (available < amount) revert TimelockVaultError.INSUFFICIENT_AVAILABLE();
+        
         L.amount = amount;
         L.endTime = endTime;
         L.locked = true;
         reservedTotal[token] += amount;
+        
         emit Locked(raffleId, token, amount, endTime);
     }
 
@@ -101,8 +107,8 @@ contract TimelockVault {
         address token
     ) external onlyCommunity {
         Lock storage L = locks[raffleId][token];
-        require(L.locked, "NOT_LOCKED");
-        require(!L.disbursed, "ALREADY_DISBURSED");
+        if (!L.locked) revert TimelockVaultError.NOT_LOCKED();
+        if (L.disbursed) revert TimelockVaultError.ALREADY_DISBURSED();
 
         uint256 amount = L.amount;
         reservedTotal[token] -= amount;
@@ -116,14 +122,15 @@ contract TimelockVault {
         address token,
         address to,
         uint256 amount
-    ) external onlyCommunity {
-        require(amount > 0, "ZERO_AMOUNT");
+    ) external onlyCommunity nonReentrant {
+        if (amount == 0) revert TimelockVaultError.ZERO_AMOUNT();
+        
         uint256 available = getBalance(token) - reservedTotal[token];
-        require(available >= amount, "INSUFFICIENT_FOR_FEE");
+        if (available < amount) revert TimelockVaultError.INSUFFICIENT_FOR_FEE();
 
         if (token == address(0)) {
             (bool success, ) = payable(to).call{value: amount}("");
-            require(success, "ETH_TRANSFER_FAILED");
+            if (!success) revert TimelockVaultError.ETH_TRANSFER_FAILED();
         } else {
             IERC20(token).safeTransfer(to, amount);
         }
@@ -133,14 +140,15 @@ contract TimelockVault {
         address token,
         address to,
         uint256 amount
-    ) external onlyCommunity {
-        require(amount > 0, "ZERO_AMOUNT");
+    ) external onlyCommunity nonReentrant {
+        if (amount == 0) revert TimelockVaultError.ZERO_AMOUNT();
+        
         uint256 available = getBalance(token) - reservedTotal[token];
-        require(available >= amount, "INSUFFICIENT_AVAILABLE");
+        if (available < amount) revert TimelockVaultError.INSUFFICIENT_AVAILABLE();
 
         if (token == address(0)) {
             (bool success, ) = payable(to).call{value: amount}("");
-            require(success, "ETH_TRANSFER_FAILED");
+            if (!success) revert TimelockVaultError.ETH_TRANSFER_FAILED();
         } else {
             IERC20(token).safeTransfer(to, amount);
         }
@@ -157,13 +165,14 @@ contract TimelockVault {
 
         // Get raffle details from community
         (
-            ,
+            ,  // skip name
+            ,  // skip token
             uint64 endTime,
-            ,
+            ,  // skip winnersCount
             uint32 maxParticipants,
-            ,
-            ,
-            ,
+            ,  // skip status
+            ,  // skip totalPrize
+            ,  // skip requireCommunityMembership
             uint256 participantsCount
         ) = ICommunity(community).getRaffleCore(raffleId);
 
@@ -181,28 +190,36 @@ contract TimelockVault {
         address token,
         address[] calldata tos,
         uint256[] calldata amounts
-    ) external onlyFactory {
-        require(tos.length == amounts.length, "LEN_MISMATCH");
-        require(canDisburse(raffleId, token), "TIMELOCK_ACTIVE");
+    ) external onlyFactory nonReentrant {
+        if (tos.length != amounts.length) revert TimelockVaultError.LEN_MISMATCH();
+        if (!canDisburse(raffleId, token)) revert TimelockVaultError.TIMELOCK_ACTIVE();
+        
         Lock storage L = locks[raffleId][token];
         uint256 total;
+        
         for (uint256 i = 0; i < tos.length; i++) {
             address to = tos[i];
             uint256 amount = amounts[i];
-            require(to != address(0), "INVALID_TO");
-            require(amount > 0, "ZERO_AMOUNT");
-            require(L.paid + amount <= L.amount, "OVERPAY");
+            
+            if (to == address(0)) revert TimelockVaultError.INVALID_TO();
+            if (amount == 0) revert TimelockVaultError.ZERO_AMOUNT();
+            if (L.paid + amount > L.amount) revert TimelockVaultError.OVERPAY();
+            
+            // Transfer funds
             if (token == address(0)) {
                 (bool success, ) = payable(to).call{value: amount}("");
-                require(success, "ETH_TRANSFER_FAILED");
+                if (!success) revert TimelockVaultError.ETH_TRANSFER_FAILED();
             } else {
                 IERC20(token).safeTransfer(to, amount);
             }
+            
             L.paid += amount;
             reservedTotal[token] -= amount;
             total += amount;
+            
             emit Paid(raffleId, token, to, amount);
         }
+        
         emit BatchPaid(raffleId, token, total);
 
         if (L.paid == L.amount) {
