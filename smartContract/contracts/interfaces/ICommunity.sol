@@ -14,6 +14,7 @@ interface ICommunity {
 
     // Core raffle state (enums are encoded as uint8 externally)
     function getRaffleCore(uint256 id) external view returns (
+        string memory name,
         address token,
         uint64 endTime,
         uint32 winnersCount,

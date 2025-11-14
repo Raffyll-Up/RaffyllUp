@@ -2,8 +2,13 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 require("dotenv").config();
 
-const { PRIVATE_KEY, ETHERSCAN_KEY, SEPOLIA_URL_KEY, LISK_URL_KEY } =
-  process.env;
+// const { PRIVATE_KEY, ETHERSCAN_KEY, SEPOLIA_URL_KEY, LISK_URL_KEY } =
+//   process.env;
+
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
+const ETHERSCAN_KEY = process.env.ETHERSCAN_KEY;
+const SEPOLIA_URL_KEY = process.env.SEPOLIA_URL_KEY;
+const LISK_URL_KEY = process.env.LISK_URL_KEY;
 
 const config: HardhatUserConfig = {
   solidity: {

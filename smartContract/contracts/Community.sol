@@ -5,6 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {TimelockVault} from "./TimelockVault.sol";
 import {RaffleHelpers} from "./libraries/RaffleHelpers.sol";
+import {CommunityError} from "./libraries/Error.sol";
 
 interface IRaffylFactory {
     function onRaffleCreated(uint256 id) external;
@@ -27,12 +28,12 @@ contract Community {
     }
 
     struct Raffle {
-        string name;
         address token; // address(0) for ETH
         uint64 endTime;
         uint32 winnersCount;
         uint32 maxParticipants;
         RaffleStatus status;
+        string name;
         uint256 totalPrize;
         bool requireCommunityMembership;
         // participants
@@ -101,37 +102,19 @@ contract Community {
     );
     event RaffleCancelled(uint256 indexed id);
 
-    error OnlyAdmin();
-    error OnlyFactory();
-    error InvalidAddress();
-    error AlreadyRegistered();
-    error ZeroAmount();
-    error VaultETHDepositFail();
-    error NoWinners();
-    error EndTimeInPast();
-    error NotUpcoming();
-    error NotActive();
-    error RaffleEnded();
-    error AlreadyJoined();
-    error NotCommunityMember();
-    error NotEnded();
-    error NotDrawn();
-    error ParticipantsExist();
-    error InvalidRaffleID();
-
     modifier onlyAdmin() {
-        if (msg.sender != admin) revert OnlyAdmin();
+        if (msg.sender != admin) revert CommunityError.OnlyAdmin();
         _;
     }
 
     modifier onlyFactory() {
-        if (msg.sender != factory) revert OnlyFactory();
+        if (msg.sender != factory) revert CommunityError.OnlyFactory();
         _;
     }
 
     constructor(address _admin, address _factory) {
-        if (_admin == address(0)) revert InvalidAddress();
-        if (_factory == address(0)) revert InvalidAddress();
+        if (_admin == address(0)) revert CommunityError.InvalidAddress();
+        if (_factory == address(0)) revert CommunityError.InvalidAddress();
         admin = _admin;
         factory = _factory;
         vault = new TimelockVault(address(this), _factory);
@@ -143,14 +126,14 @@ contract Community {
     }
 
     function register() external {
-        if (_registered[msg.sender]) revert AlreadyRegistered();
+        if (_registered[msg.sender]) revert CommunityError.AlreadyRegistered();
         _registered[msg.sender] = true;
         emit Registered(msg.sender);
     }
 
     // Admin management
     function setAdmin(address newAdmin) external onlyAdmin {
-        if (newAdmin == address(0)) revert InvalidAddress();
+        if (newAdmin == address(0)) revert CommunityError.InvalidAddress();
         emit AdminChanged(admin, newAdmin);
         admin = newAdmin;
     }
@@ -161,23 +144,23 @@ contract Community {
     }
 
     function depositETH() external payable onlyAdmin {
-        if (msg.value == 0) revert ZeroAmount();
+        if (msg.value == 0) revert CommunityError.ZeroAmount();
         // forward ETH to vault
         (bool ok, ) = address(vault).call{value: msg.value}("");
-        if (!ok) revert VaultETHDepositFail();
+        if (!ok) revert CommunityError.VaultETHDepositFail();
         emit FundedETH(msg.sender, msg.value);
     }
 
     function depositToken(address token, uint256 amount) external onlyAdmin {
-        if (token == address(0)) revert InvalidAddress();
-        if (amount == 0) revert ZeroAmount();
+        if (token == address(0)) revert CommunityError.InvalidAddress();
+        if (amount == 0) revert CommunityError.ZeroAmount();
         // pull from admin directly into vault
         IERC20(token).safeTransferFrom(msg.sender, address(vault), amount);
         emit FundedToken(msg.sender, token, amount);
     }
 
     function withdraw(address token, uint256 amount) external onlyAdmin {
-        require(amount > 0, "ZERO_AMOUNT");
+        if (amount == 0) revert CommunityError.ZeroAmount();
         vault.withdrawAvailable(token, admin, amount);
 
         if (token == address(0)) {
@@ -202,9 +185,9 @@ contract Community {
         uint256 totalPrize,
         bool requireMembership
     ) external onlyAdmin returns (uint256 id) {
-        if (winnersCount == 0) revert NoWinners();
-        if (endTime <= block.timestamp) revert EndTimeInPast();
-        if (totalPrize == 0) revert ZeroAmount();
+        if (winnersCount == 0) revert CommunityError.NoWinners();
+        if (endTime <= block.timestamp) revert CommunityError.EndTimeInPast();
+        if (totalPrize == 0) revert CommunityError.ZeroAmount();
 
         id = _nextRaffleId++;
         Raffle storage r = _raffles[id];
@@ -236,13 +219,13 @@ contract Community {
     // Lock funds and start raffle
     function lockRaffleFunds(uint256 id) external onlyAdmin {
         Raffle storage r = _raffles[id];
-        if (r.status != RaffleStatus.Upcoming) revert NotUpcoming();
-        if (r.endTime <= block.timestamp) revert EndTimeInPast();
+        if (r.status != RaffleStatus.Upcoming) revert CommunityError.NotUpcoming();
+        if (r.endTime <= block.timestamp) revert CommunityError.EndTimeInPast();
 
         uint256 prize = r.totalPrize;
         address treasury = IRaffylFactory(factory).treasury();
         if (treasury != address(0)) {
-            uint256 fee = (prize * 1) / 100;
+            uint256 fee = (prize * 100) / 10000;
             if (fee > 0) {
                 prize -= fee;
                 vault.sendFee(r.token, treasury, fee);
@@ -259,18 +242,17 @@ contract Community {
     // update this to take an array of addresses
     function registerForRaffle(uint256 id, address[] calldata users) external {
         Raffle storage r = _raffles[id];
-        if (r.status != RaffleStatus.Active) revert NotActive();
-        if (block.timestamp >= r.endTime) revert RaffleEnded();
-
+        if (r.status != RaffleStatus.Active) revert CommunityError.NotActive();
+        if (block.timestamp >= r.endTime) revert CommunityError.RaffleEnded();
+        if (r.maxParticipants > 0 && r.participants.length + users.length > r.maxParticipants) {
+            revert CommunityError.ExceedsMaxParticipants();
+        }
+            
         for (uint i = 0; i < users.length; i++) {
-            if (
-                r.maxParticipants > 0 &&
-                r.participants.length >= r.maxParticipants
-            ) revert RaffleEnded();
             address user = users[i];
-            if (r.isParticipant[user]) revert AlreadyJoined();
+            if (r.isParticipant[user]) revert CommunityError.AlreadyJoined();
             if (r.requireCommunityMembership) {
-                if (!_registered[user]) revert NotCommunityMember();
+                if (!_registered[user]) revert CommunityError.NotCommunityMember();
             }
             r.isParticipant[user] = true;
             r.participants.push(user);
@@ -281,17 +263,18 @@ contract Community {
     // Draw winners
     function drawWinners(uint256 id) external onlyAdmin {
         Raffle storage r = _raffles[id];
-        if (r.status != RaffleStatus.Active) revert NotActive();
+        if (r.status != RaffleStatus.Active) revert CommunityError.NotActive();
         bool timeEnded = block.timestamp >= r.endTime;
         bool maxReached = r.maxParticipants > 0 &&
             r.participants.length >= r.maxParticipants;
 
-        if (!timeEnded && !maxReached) revert NotEnded();
+        if (!timeEnded && !maxReached) revert CommunityError.NotEnded();
 
         uint256 n = r.participants.length;
         uint32 k = r.winnersCount;
         if (n < k) k = uint32(n);
 
+        // change to gelato VRF for offchain randomness
         bytes32 seed = keccak256(
             abi.encodePacked(
                 blockhash(block.number - 1),
@@ -327,9 +310,9 @@ contract Community {
 
     function cancelRaffle(uint256 id) external onlyAdmin {
         Raffle storage r = _raffles[id];
-        if (r.status != RaffleStatus.Active) revert NotActive();
-        if (block.timestamp < r.endTime) revert NotEnded();
-        if (r.participants.length > 0) revert ParticipantsExist();
+        if (r.status != RaffleStatus.Active) revert CommunityError.NotActive();
+        if (block.timestamp < r.endTime) revert CommunityError.NotEnded();
+        if (r.participants.length > 0) revert CommunityError.ParticipantsExist();
 
         // Unlock funds in the vault and update status
         r.status = RaffleStatus.Cancelled;
@@ -340,7 +323,7 @@ contract Community {
 
     function markRafflePaidOut(uint256 id) external onlyFactory {
         Raffle storage r = _raffles[id];
-        if (r.status != RaffleStatus.Drawn) revert NotDrawn();
+        if (r.status != RaffleStatus.Drawn) revert CommunityError.NotDrawn();
         r.status = RaffleStatus.PaidOut;
     }
 
@@ -355,6 +338,7 @@ contract Community {
         external
         view
         returns (
+            string memory name,
             address token,
             uint64 endTime,
             uint32 winnersCount,
@@ -366,8 +350,9 @@ contract Community {
         )
     {
         Raffle storage r = _raffles[id];
-        if (r.endTime == 0) revert InvalidRaffleID();
+        if (r.endTime == 0) revert CommunityError.InvalidRaffleID();
         return (
+            r.name,
             r.token,
             r.endTime,
             r.winnersCount,
@@ -379,15 +364,9 @@ contract Community {
         );
     }
 
-    function getWinners(
-        uint256 id
-    )
-        external
-        view
-        returns (address[] memory winners, uint256[] memory amounts)
-    {
+    function getWinners(uint256 id) external view returns (address[] memory winners, uint256[] memory amounts) {
         Raffle storage r = _raffles[id];
-        if (r.endTime == 0) revert InvalidRaffleID();
+        if (r.endTime == 0) revert CommunityError.InvalidRaffleID();
         uint256 n = r.winners.length;
         winners = new address[](n);
         amounts = new uint256[](n);
@@ -397,10 +376,22 @@ contract Community {
         }
     }
 
+    function isParticipantInRaffle(uint256 id, address user) external view returns (bool) {
+        return _raffles[id].isParticipant[user];
+    }
+
+    function getRaffleParticipants(uint256 id) external view returns (address[] memory) {
+        return _raffles[id].participants;
+    }
+
+    function getRaffleCount() external view returns (uint256) {
+        return _raffleIds.length;
+    }
+
     // View: token for raffle ID (used by Factory orchestrator)
     function getRaffleToken(uint256 id) external view returns (address) {
         Raffle storage r = _raffles[id];
-        if (r.endTime == 0) revert InvalidRaffleID();
+        if (r.endTime == 0) revert CommunityError.InvalidRaffleID();
         return r.token;
     }
 }
